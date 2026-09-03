@@ -1,0 +1,6 @@
+{
+  "name": "Trendora",
+  "description": "Discover what's trending across AI, technology, entertainment, sports, and global news with AI insights and predictive analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

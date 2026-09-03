@@ -1,0 +1,67 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Trend rising spark wave and futuristic T glyph -->
+    <path
+        android:pathData="M28,68 L42,50 L56,60 L78,32"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="28"
+                android:startY="68"
+                android:endX="78"
+                android:endY="32"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00F0FF" />
+                <item android:offset="1.0" android:color="#A855F7" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Arrowhead at (78, 32) -->
+    <path
+        android:pathData="M66,32 L78,32 L78,44"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeColor="#A855F7" />
+    <!-- AI Spark Nodes -->
+    <path
+        android:pathData="M28,68m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0"
+        android:fillColor="#00F0FF" />
+    <path
+        android:pathData="M42,50m-3.5,0a3.5,3.5 0 1,0 7,0a3.5,3.5 0 1,0 -7,0"
+        android:fillColor="#38BDF8" />
+    <path
+        android:pathData="M56,60m-3.5,0a3.5,3.5 0 1,0 7,0a3.5,3.5 0 1,0 -7,0"
+        android:fillColor="#818CF8" />
+    <path
+        android:pathData="M78,32m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0"
+        android:fillColor="#C084FC" />
+    <!-- AI Star Sparkle top-right -->
+    <path
+        android:pathData="M84,24 L86,18 L88,24 L94,26 L88,28 L86,34 L84,28 L78,26 Z"
+        android:fillColor="#00F0FF" />
+    <!-- Bottom Trend Glow Indicator -->
+    <path
+        android:pathData="M36,78 L72,78"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="36"
+                android:startY="78"
+                android:endX="72"
+                android:endY="78"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00F0FF" />
+                <item android:offset="0.5" android:color="#A855F7" />
+                <item android:offset="1.0" android:color="#00F0FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
