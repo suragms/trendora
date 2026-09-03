@@ -4,9 +4,11 @@ import com.example.core.network.GNewsApiService
 import com.example.core.network.GNewsClient
 import com.example.core.network.GNewsErrorMapper
 import com.example.core.network.NetworkMonitor
+import com.example.data.remote.dto.GNewsArticleDto
 import com.example.data.remote.mapper.GNewsMappers
 import com.example.domain.model.BreakingNewsItem
 import com.example.domain.model.Country
+import com.example.domain.model.TimeFilter
 import com.example.domain.model.TrendCategory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,7 +29,8 @@ class RemoteTrendDataSource(
         category: TrendCategory,
         country: Country,
         query: String,
-        max: Int
+        max: Int,
+        timeFilter: TimeFilter
     ): DataSourceResult<List<BreakingNewsItem>> = withContext(Dispatchers.IO) {
         if (!isConfigured) {
             return@withContext DataSourceResult.Error(GNewsErrorMapper.MISSING_KEY_MESSAGE)
@@ -53,7 +56,11 @@ class RemoteTrendDataSource(
                 )
             }
 
+            // Apply the recency filter client-side on real publication timestamps.
+            val cutoffMillis = timeFilter.cutoffMillis()
             val articles = response.articles.orEmpty()
+                .filter { it.publishedAtMillis() >= cutoffMillis }
+
             if (articles.isEmpty()) {
                 return@withContext DataSourceResult.Empty
             }
@@ -74,5 +81,25 @@ class RemoteTrendDataSource(
         } catch (e: Exception) {
             DataSourceResult.Error(GNewsErrorMapper.fromThrowable(e))
         }
+    }
+
+    /**
+     * Publication time in epoch millis. When the timestamp is absent/unparsable
+     * we return [Long.MAX_VALUE] so the article is KEPT — we cannot determine
+     * its age, and recency filtering should only apply where a real timestamp
+     * is available.
+     */
+    private fun GNewsArticleDto.publishedAtMillis(): Long =
+        GNewsMappers.parseDate(publishedAt) ?: Long.MAX_VALUE
+}
+
+/** Number of milliseconds an article must be newer than to match a [TimeFilter]. */
+private fun TimeFilter.cutoffMillis(): Long {
+    val now = System.currentTimeMillis()
+    return when (this) {
+        TimeFilter.LAST_HOUR -> now - 60 * 60 * 1000L
+        TimeFilter.TODAY -> now - 24 * 60 * 60 * 1000L
+        TimeFilter.THIS_WEEK -> now - 7 * 24 * 60 * 60 * 1000L
+        TimeFilter.THIS_MONTH -> now - 30 * 24 * 60 * 60 * 1000L
     }
 }

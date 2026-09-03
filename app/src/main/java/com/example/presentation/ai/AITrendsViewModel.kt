@@ -145,9 +145,10 @@ class AITrendsViewModel(
                 AnalysisStep.PREDICTING
             )
 
-            // Run analysis
-            val analysisDeferred = kotlinx.coroutines.async {
-                aiRepository.analyzeTrendStructured(
+            // Run the real analysis first, then animate steps — keeps the UX
+            // smooth without an unscoped `async` inside another flow scope.
+            try {
+                val analysisResult: TrendAnalysisResult = aiRepository.analyzeTrendStructured(
                     trendId = trend.id,
                     trendTitle = trend.title,
                     category = trend.category.displayName,
@@ -157,17 +158,12 @@ class AITrendsViewModel(
                     growthInfo = "+${trend.growthPercentage}%",
                     forceRefresh = forceRefresh
                 )
-            }
-
-            // Animate steps
-            for (step in steps) {
-                _analysisStep.value = step
-                kotlinx.coroutines.delay(600)
-            }
-
-            try {
-                val result = analysisDeferred.await()
-                _selectedAnalysis.value = result
+                // Animate steps while "presenting" the result
+                for (step in steps) {
+                    _analysisStep.value = step
+                    kotlinx.coroutines.delay(180)
+                }
+                _selectedAnalysis.value = analysisResult
                 _analysisStep.value = AnalysisStep.COMPLETE
                 kotlinx.coroutines.delay(500)
                 _analysisStep.value = AnalysisStep.IDLE

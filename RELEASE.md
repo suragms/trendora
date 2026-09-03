@@ -85,7 +85,8 @@ Outputs:
 - AAB: `app/build/outputs/bundle/release/app-release.aab`
 - APK: `app/build/outputs/apk/release/app-release.apk`
 
-The debug build is signed with `debug.keystore` automatically and needs no setup.
+The debug build uses Android's standard auto-generated debug keystore and needs no setup
+on a fresh clone.
 
 ---
 
@@ -123,18 +124,22 @@ Room-generated schemas and any model classes referenced by reflection. If unsure
 
 ---
 
-## 6. Secrets & the Gemini API key
+## 6. Secrets & API keys
 
-The API key is **not** hardcoded. The [Secrets Gradle Plugin](https://github.com/google/secrets-gradle-plugin)
-reads it from a local `.env` file (git-ignored):
+The API keys are **not** hardcoded. Both the GNews and Gemini keys are read from the
+single git-ignored `local.properties` file and injected via `BuildConfig` at build time:
 
 ```
-# .env  (never commit this)
-GEMINI_API_KEY=your_key_here
+# local.properties  (never commit this)
+GNEWS_API_KEY=your_gnews_key_here
+GEMINI_API_KEY=your_gemini_key_here
 ```
 
-`BuildConfig.GEMINI_API_KEY` is then available in code. See [`.env.example`](.env.example)
-for the expected variable names. Never commit `.env` or any real key.
+- **GNews key:** https://gnews.io/
+- **Gemini key:** https://aistudio.google.com/apikey
+
+Never commit `local.properties`, `.env`, or any real key. See [`README.md`](README.md)
+for the full configuration instructions.
 
 ---
 

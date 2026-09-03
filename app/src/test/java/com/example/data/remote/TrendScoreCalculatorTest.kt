@@ -3,6 +3,7 @@ package com.example.data.remote
 import com.example.domain.model.BreakingNewsItem
 import com.example.domain.model.Country
 import com.example.domain.model.TrendCategory
+import com.example.domain.model.TrendScore
 import com.example.domain.model.TrendTier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -56,7 +57,7 @@ class TrendScoreCalculatorTest {
         assertEquals(TrendTier.VIRAL, viral)
         assertEquals(TrendTier.RISING, rising)
         assertEquals(TrendTier.POPULAR, popular)
-        assertEquals(TrendTier.DECLINING, low)
+        assertEquals(TrendTier.LOW_ACTIVITY, low)
     }
 
     @Test

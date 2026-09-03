@@ -58,7 +58,7 @@ class TrendRepositoryImpl(
         timeFilter: TimeFilter
     ): Flow<List<TrendItem>> {
         return flow {
-            val result = dataSource.fetchNews(category, country, query, max = 30)
+            val result = dataSource.fetchNews(category, country, query, max = 30, timeFilter = timeFilter)
             _trends.value = toTrendItems(result, country)
             emit(Unit)
         }.flatMapLatest {
@@ -100,10 +100,16 @@ class TrendRepositoryImpl(
     }
 
     override fun getLoadState(): Flow<NewsLoadState> {
-        return combine(dataSource.lastError, networkMonitor.isConnected) { error, connected ->
+        return combine(
+            dataSource.lastError,
+            networkMonitor.isConnected,
+            dataSource.lastServedFrom
+        ) { error, connected, servedFrom ->
             NewsLoadState(
                 isOffline = !connected,
-                errorMessage = error?.userMessage
+                errorMessage = error?.userMessage,
+                fromCache = servedFrom == com.example.data.remote.ServedFrom.CACHE,
+                fromMock = servedFrom == com.example.data.remote.ServedFrom.MOCK
             )
         }
     }

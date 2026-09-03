@@ -103,21 +103,21 @@ class AIRepositoryImpl(
             }
         }
 
-        // Rule-based fallback
+        // Rule-based fallback — deliberately neutral. It must NOT invent
+        // specific metrics (discussion counts, exact growth %, timestamps) that
+        // were never observed, to avoid presenting fabricated data as real.
         return AIAnalysis(
-            summary = "$trendTitle is experiencing rapid multi-channel momentum with over 150K discussions recorded across search, news, and developer channels.",
-            whyTrending = "A convergence of high-impact announcements, viral tech demonstrations, and major enterprise adoptions have pushed $trendTitle to the front page.",
-            sentiment = SentimentBreakdown(82, 12, 6, "Strongly optimistic sentiment driven by practical performance breakthroughs."),
-            expectedGrowthPercent = 91,
-            viralProbabilityPercent = 87,
-            aiConfidencePercent = 94,
-            growthTrajectory = "Rapid Exponential",
-            relatedTopics = listOf("Autonomous Workflows", "Next-Gen Compute", "Ecosystem Expansion", "Neural Architecture", "Industry Standards"),
+            summary = "$trendTitle is receiving notable attention in the $category space, based on available coverage. Live metrics require the Gemini API key to be configured.",
+            whyTrending = "Increased recent media coverage and public interest in $trendTitle. Configure the Gemini API key for a detailed, data-driven explanation.",
+            sentiment = SentimentBreakdown(70, 20, 10, "Estimated from available coverage; not based on live sentiment data."),
+            expectedGrowthPercent = 50,
+            viralProbabilityPercent = 50,
+            aiConfidencePercent = 35,
+            growthTrajectory = "Steady Climb",
+            relatedTopics = listOf("$category", "Trending Now"),
             timeline = listOf(
-                "02:00 UTC: Initial research benchmarks published on ArXiv",
-                "06:30 UTC: Developer demos go viral on X & GitHub trending",
-                "10:15 UTC: Tech publications release deep-dive benchmarks",
-                "Now: Sustained peak engagement across global engineering hubs"
+                "Coverage for this trend is currently being aggregated.",
+                "Connect to the internet with a configured API key for live analysis."
             )
         )
     }
@@ -134,7 +134,7 @@ class AIRepositoryImpl(
             if (!response.isNullOrBlank()) return response
         }
 
-        return "🤖 Trendora AI Insight: Real-time telemetry indicates steady upward growth (+84%) driven by positive community sentiment and multi-platform media aggregation."
+        return "🤖 Trendora AI Insight: I need a configured Gemini API key and an internet connection to give you live analysis. Add your key in local.properties and try again."
     }
 
     override fun getDailyAISummary(): Flow<String> = _dailySummary

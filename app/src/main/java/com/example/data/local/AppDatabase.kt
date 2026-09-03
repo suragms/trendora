@@ -25,6 +25,17 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        /**
+         * Migration strategy: the schema is still pre-1.0 and evolving, so we
+         * currently use [fallbackToDestructiveMigration] to avoid crashing on an
+         * out-of-date cached database. The user data stored here is all
+         * re-derivable (bookmarks/news cache/AI cache) and there is no released
+         * production version yet.
+         *
+         * BEFORE the first production (Play Store / GitHub) release, replace this
+         * with explicit `RoomDatabase.Callback`/Migration objects so a future
+         * schema change does NOT silently wipe user bookmarks. See RELEASE.md.
+         */
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(

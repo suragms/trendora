@@ -24,6 +24,10 @@ class NewsRepositoryImpl(
     override fun getBreakingNews(category: TrendCategory): Flow<List<BreakingNewsItem>> {
         return flow {
             val result = dataSource.fetchNews(category, Country.GLOBAL, max = 12)
+            // The fallback data source already resolves to cache or mock on
+            // failure, so by the time we get here there is always content to
+            // show. A genuine empty result (nothing at all) is still emitted as
+            // an empty list so the UI can render its empty state deliberately.
             emit(
                 when (result) {
                     is DataSourceResult.Success -> result.data
@@ -34,12 +38,16 @@ class NewsRepositoryImpl(
     }
 
     override fun getLoadState(): Flow<NewsLoadState> {
-        return combine(dataSource.lastError, networkMonitor.isConnected) { error, connected ->
+        return combine(
+            dataSource.lastError,
+            networkMonitor.isConnected,
+            dataSource.lastServedFrom
+        ) { error, connected, servedFrom ->
             NewsLoadState(
                 isOffline = !connected,
                 errorMessage = error?.userMessage,
-                fromCache = false,
-                fromMock = false
+                fromCache = servedFrom == com.example.data.remote.ServedFrom.CACHE,
+                fromMock = servedFrom == com.example.data.remote.ServedFrom.MOCK
             )
         }
     }

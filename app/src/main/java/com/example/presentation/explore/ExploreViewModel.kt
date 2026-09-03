@@ -26,7 +26,8 @@ data class ExploreUiState(
     val isGridView: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isOffline: Boolean = false
+    val isOffline: Boolean = false,
+    val isShowingMock: Boolean = false
 )
 
 private data class FilterConfig(
@@ -62,15 +63,17 @@ class ExploreViewModel(
     private val _isLoading = MutableStateFlow(true)
     private val _lastError = MutableStateFlow<String?>(null)
     private val _isOffline = MutableStateFlow(false)
+    private val _isShowingMock = MutableStateFlow(false)
 
     private data class StatusState(
         val isLoading: Boolean,
         val errorMessage: String?,
-        val isOffline: Boolean
+        val isOffline: Boolean,
+        val isShowingMock: Boolean
     )
 
-    private val statusFlow = combine(_isLoading, _lastError, _isOffline) { loading, error, offline ->
-        StatusState(loading, error, offline)
+    private val statusFlow = combine(_isLoading, _lastError, _isOffline, _isShowingMock) { loading, error, offline, mock ->
+        StatusState(loading, error, offline, mock)
     }
 
     private val filterConfigFlow = combine(
@@ -134,7 +137,8 @@ class ExploreViewModel(
             isGridView = view.isGridView,
             isLoading = status.isLoading,
             errorMessage = status.errorMessage,
-            isOffline = status.isOffline
+            isOffline = status.isOffline,
+            isShowingMock = status.isShowingMock
         )
     }.stateIn(
         scope = viewModelScope,
@@ -147,6 +151,7 @@ class ExploreViewModel(
         viewModelScope.launch {
             trendRepository.getLoadState().collect { state ->
                 _isOffline.value = state.isOffline
+                _isShowingMock.value = state.fromMock
                 if (state.errorMessage != null) _lastError.value = state.errorMessage
                 else if (!state.isOffline) _lastError.value = null
             }

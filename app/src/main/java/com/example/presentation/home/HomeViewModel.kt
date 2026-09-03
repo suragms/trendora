@@ -26,6 +26,8 @@ data class HomeUiState(
     val showNotificationsDialog: Boolean = false,
     val isOffline: Boolean = false,
     val errorMessage: String? = null,
+    val isShowingCached: Boolean = false,
+    val isShowingMock: Boolean = false,
     val userGreeting: String = "Good Morning, Surag 👋"
 )
 
@@ -45,6 +47,13 @@ private data class HomeFilterState(
     val showNotificationsDialog: Boolean
 )
 
+private data class HomeFlags(
+    val isOffline: Boolean,
+    val errorMessage: String?,
+    val isShowingCached: Boolean,
+    val isShowingMock: Boolean
+)
+
 class HomeViewModel(
     private val trendRepository: TrendRepository,
     private val newsRepository: NewsRepository,
@@ -59,6 +68,8 @@ class HomeViewModel(
     private val _isLoading = MutableStateFlow(true)
     private val _isOffline = MutableStateFlow(false)
     private val _errorMessage = MutableStateFlow<String?>(null)
+    private val _isShowingCached = MutableStateFlow(false)
+    private val _isShowingMock = MutableStateFlow(false)
 
     private val contentDataFlow: Flow<HomeContentData> = _selectedCategory.flatMapLatest { cat ->
         combine(
@@ -88,13 +99,19 @@ class HomeViewModel(
         HomeFilterState(cat, query, refreshing, voiceDialog, notifDialog)
     }
 
+    // Fold the two flag flows into one so the final combine stays at 5 named params.
+    private val flagsFlow: Flow<HomeFlags> = combine(
+        _isOffline, _errorMessage, _isShowingCached, _isShowingMock
+    ) { isOffline, errorMessage, showingCached, showingMock ->
+        HomeFlags(isOffline, errorMessage, showingCached, showingMock)
+    }
+
     val uiState: StateFlow<HomeUiState> = combine(
         contentDataFlow,
         filterStateFlow,
         _isLoading,
-        _isOffline,
-        _errorMessage
-    ) { content, filter, isLoading, isOffline, errorMessage ->
+        flagsFlow
+    ) { content, filter, isLoading, flags ->
         val filteredTrends = if (filter.searchQuery.isBlank()) {
             content.trends
         } else {
@@ -115,8 +132,10 @@ class HomeViewModel(
             unreadNotificationsCount = content.unreadNotifsCount,
             isLoading = isLoading,
             isRefreshing = filter.isRefreshing,
-            isOffline = isOffline,
-            errorMessage = errorMessage,
+            isOffline = flags.isOffline,
+            errorMessage = flags.errorMessage,
+            isShowingCached = flags.isShowingCached,
+            isShowingMock = flags.isShowingMock,
             showVoiceDialog = filter.showVoiceDialog,
             showNotificationsDialog = filter.showNotificationsDialog
         )
@@ -133,10 +152,13 @@ class HomeViewModel(
             _isLoading.value = false
         }
         // Surface real offline/error state from the data layer (rate limits,
-        // missing key, server errors) with user-friendly messages.
+        // missing key, server errors) with user-friendly messages. Also track
+        // whether we are showing cached or mock data so the banner is accurate.
         viewModelScope.launch {
             newsRepository.getLoadState().collect { state ->
                 _isOffline.value = state.isOffline
+                _isShowingCached.value = state.fromCache
+                _isShowingMock.value = state.fromMock
                 if (state.errorMessage != null) _errorMessage.value = state.errorMessage
             }
         }

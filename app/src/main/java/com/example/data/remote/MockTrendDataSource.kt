@@ -3,6 +3,7 @@ package com.example.data.remote
 import com.example.data.remote.MockTrendsDataSource
 import com.example.domain.model.BreakingNewsItem
 import com.example.domain.model.Country
+import com.example.domain.model.TimeFilter
 import com.example.domain.model.TrendCategory
 
 /**
@@ -10,6 +11,9 @@ import com.example.domain.model.TrendCategory
  * never left on a broken empty screen (first launch, no key, or API down).
  *
  * The mock data is NEVER removed — it is preserved and used as the last resort.
+ *
+ * Mock articles carry no real publication timestamps, so [timeFilter] is ignored
+ * here (it cannot be meaningfully applied to fabricated data).
  */
 class MockTrendDataSource : TrendDataSource {
 
@@ -19,7 +23,8 @@ class MockTrendDataSource : TrendDataSource {
         category: TrendCategory,
         country: Country,
         query: String,
-        max: Int
+        max: Int,
+        timeFilter: TimeFilter
     ): DataSourceResult<List<BreakingNewsItem>> {
         // Mock breaking-news items are global (no country tag), so country is
         // only used to decide category relevance, not to filter exact regions.
@@ -30,8 +35,8 @@ class MockTrendDataSource : TrendDataSource {
 
         if (filtered.isEmpty()) {
             // Never hand back an empty screen: fall back to the full mock set.
-            return DataSourceResult.Success(allNews.take(max))
+            return DataSourceResult.Success(allNews.take(max), fromMock = true)
         }
-        return DataSourceResult.Success(filtered)
+        return DataSourceResult.Success(filtered, fromMock = true)
     }
 }

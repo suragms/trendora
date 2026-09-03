@@ -122,8 +122,8 @@ class TrendDetailViewModel(
                 DetailAnalysisStep.PREDICTING
             )
 
-            val analysisDeferred = kotlinx.coroutines.async {
-                aiRepository.analyzeTrendStructured(
+            try {
+                val analysisResult = aiRepository.analyzeTrendStructured(
                     trendId = currentTrend.id,
                     trendTitle = currentTrend.title,
                     category = currentTrend.category.displayName,
@@ -133,15 +133,11 @@ class TrendDetailViewModel(
                     growthInfo = "+${currentTrend.growthPercentage}%",
                     forceRefresh = forceRefresh
                 )
-            }
-
-            for (step in steps) {
-                _uiState.value = _uiState.value.copy(analysisStep = step)
-                kotlinx.coroutines.delay(550)
-            }
-
-            try {
-                val result = analysisDeferred.await()
+                for (step in steps) {
+                    _uiState.value = _uiState.value.copy(analysisStep = step)
+                    kotlinx.coroutines.delay(180)
+                }
+                val result = analysisResult
                 val updatedTrend = currentTrend.copy(aiAnalysis = result.toAIAnalysis())
                 _uiState.value = _uiState.value.copy(
                     trend = updatedTrend,

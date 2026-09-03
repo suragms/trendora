@@ -23,7 +23,6 @@ plugins {
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
-  alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
 }
 
@@ -45,7 +44,7 @@ android {
     buildConfigField("String", "GNEWS_API_KEY", "\"${secretFromLocalProperties("GNEWS_API_KEY")}\"")
 
     // Gemini AI API key (from local.properties -> BuildConfig).
-    // Also available via .env -> Secrets Plugin; local.properties takes precedence.
+    // local.properties is the single, git-ignored source of truth for keys.
     // Get your key free at https://aistudio.google.com/apikey
     buildConfigField("String", "GEMINI_API_KEY", "\"${secretFromLocalProperties("GEMINI_API_KEY")}\"")
   }
@@ -58,12 +57,6 @@ android {
       keyAlias = "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
-    }
   }
 
   buildTypes {
@@ -73,7 +66,9 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
+    // The debug build uses Android's standard auto-generated debug keystore, so
+    // a fresh clone builds and runs with zero extra signing setup.
+    debug { }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -88,14 +83,6 @@ android {
     includeInApk = false
     includeInBundle = true
   }
-}
-
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
-  ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }

@@ -34,7 +34,7 @@ enum class TrendTier(val title: String, val emoji: String) {
     VIRAL("Viral", "🔥"),
     RISING("Rising", "📈"),
     POPULAR("Popular", "👀"),
-    DECLINING("Declining", "📉")
+    LOW_ACTIVITY("Low Activity", "📉")
 }
 
 data class TrendScore(
@@ -50,7 +50,7 @@ data class TrendScore(
             totalScore >= 90 -> TrendTier.VIRAL
             totalScore >= 70 -> TrendTier.RISING
             totalScore >= 40 -> TrendTier.POPULAR
-            else -> TrendTier.DECLINING
+            else -> TrendTier.LOW_ACTIVITY
         }
 
     companion object {

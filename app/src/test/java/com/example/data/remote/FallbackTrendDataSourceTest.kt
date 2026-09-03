@@ -138,6 +138,29 @@ class FallbackTrendDataSourceTest {
     }
 
     @Test
+    fun `remote failure with no cache falls back to mock - never empty`() = runBlocking {
+        val body = "".toResponseBody("application/json".toMediaType())
+        val service = FakeGNewsApiService(error = HttpException(Response.error<Any>(429, body)))
+        val (fallback, _, _) = build(connected = true, service = service)
+
+        val result = fallback.fetchNews(TrendCategory.ALL, Country.GLOBAL)
+        assertTrue(result is DataSourceResult.Success)
+        assertTrue((result as DataSourceResult.Success).data.isNotEmpty())
+        assertTrue(result.fromMock)
+    }
+
+    @Test
+    fun `remote empty response with no cache falls back to mock`() = runBlocking {
+        val service = FakeGNewsApiService(response = GNewsResponseDto(totalArticles = 0, articles = emptyList()))
+        val (fallback, _, _) = build(connected = true, service = service)
+
+        val result = fallback.fetchNews(TrendCategory.ALL, Country.GLOBAL)
+        assertTrue(result is DataSourceResult.Success)
+        assertTrue((result as DataSourceResult.Success).data.isNotEmpty())
+        assertTrue(result.fromMock)
+    }
+
+    @Test
     fun `remote failure falls back to cache`() = runBlocking {
         val (_, cached, _) = build(connected = true, service = FakeGNewsApiService())
         cached.save(

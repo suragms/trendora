@@ -5,11 +5,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Tests for structured AI output parsing. Uses a fake Gemini client so no
  * network or Android dependency is required.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class AiTrendAnalysisServiceTest {
 
     private class FakeGeminiClient(

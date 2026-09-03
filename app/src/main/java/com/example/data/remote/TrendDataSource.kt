@@ -2,6 +2,7 @@ package com.example.data.remote
 
 import com.example.domain.model.BreakingNewsItem
 import com.example.domain.model.Country
+import com.example.domain.model.TimeFilter
 import com.example.domain.model.TrendCategory
 
 /**
@@ -15,12 +16,20 @@ import com.example.domain.model.TrendCategory
  */
 interface TrendDataSource {
 
-    /** Fetches news for the given filter. Never throws — always returns a result. */
+    /**
+     * Fetches news for the given filter. Never throws — always returns a result.
+     *
+     * @param timeFilter Filters by publication recency. GNews does not expose a
+     *   direct recency filter on the `top-headlines` endpoint, so implementations
+     *   that carry real timestamps apply it client-side (see
+     *   [RemoteTrendDataSource]). Mock/cache sources treat it as best-effort.
+     */
     suspend fun fetchNews(
         category: TrendCategory,
         country: Country,
         query: String = "",
-        max: Int = 20
+        max: Int = 20,
+        timeFilter: TimeFilter = TimeFilter.TODAY
     ): DataSourceResult<List<BreakingNewsItem>>
 }
 
@@ -29,7 +38,11 @@ interface TrendDataSource {
  * user-friendly UI states without exposing raw exceptions.
  */
 sealed class DataSourceResult<out T> {
-    data class Success<T>(val data: T, val fromCache: Boolean = false) : DataSourceResult<T>()
+    data class Success<T>(
+        val data: T,
+        val fromCache: Boolean = false,
+        val fromMock: Boolean = false
+    ) : DataSourceResult<T>()
     data class Error(val userMessage: String, val code: Int? = null) : DataSourceResult<Nothing>()
     object Empty : DataSourceResult<Nothing>()
 }

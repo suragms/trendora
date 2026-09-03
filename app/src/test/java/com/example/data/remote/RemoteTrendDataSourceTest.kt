@@ -7,6 +7,7 @@ import com.example.core.network.NetworkMonitor
 import com.example.data.remote.dto.GNewsArticleDto
 import com.example.data.remote.dto.GNewsResponseDto
 import com.example.domain.model.Country
+import com.example.domain.model.TimeFilter
 import com.example.domain.model.TrendCategory
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
@@ -59,6 +60,46 @@ class RemoteTrendDataSourceTest {
             )
         }
     )
+
+    private fun isoUtc(epochMillis: Long): String =
+        java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(epochMillis))
+
+    @Test
+    fun `time filter drops stale articles when timestamp is available`() = runBlocking {
+        val now = System.currentTimeMillis()
+        val service = FakeGNewsApiService(
+            response = GNewsResponseDto(
+                totalArticles = 2,
+                articles = listOf(
+                    GNewsArticleDto(
+                        title = "Fresh", url = "https://example.com/fresh",
+                        publishedAt = isoUtc(now - 10 * 60 * 1000L) // 10 min ago
+                    ),
+                    GNewsArticleDto(
+                        title = "Stale", url = "https://example.com/stale",
+                        publishedAt = isoUtc(now - 5 * 24 * 60 * 60 * 1000L) // 5 days ago
+                    )
+                )
+            )
+        )
+        val source = RemoteTrendDataSource(service, FakeNetworkMonitor(true), isConfigured = true)
+
+        val result = source.fetchNews(TrendCategory.TECH, Country.USA, timeFilter = TimeFilter.LAST_HOUR)
+        assertTrue(result is DataSourceResult.Success)
+        assertEquals(listOf("Fresh"), (result as DataSourceResult.Success).data.map { it.headline })
+    }
+
+    @Test
+    fun `time filter keeps articles with unknown timestamps`() = runBlocking {
+        val service = FakeGNewsApiService(response = responseWith("Alpha", "Beta"))
+        val source = RemoteTrendDataSource(service, FakeNetworkMonitor(true), isConfigured = true)
+
+        val result = source.fetchNews(TrendCategory.TECH, Country.USA, timeFilter = TimeFilter.LAST_HOUR)
+        assertTrue(result is DataSourceResult.Success)
+        assertEquals(2, (result as DataSourceResult.Success).data.size)
+    }
 
     @Test
     fun `returns success with mapped articles`() = runBlocking {

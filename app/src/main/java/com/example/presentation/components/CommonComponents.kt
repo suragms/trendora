@@ -218,7 +218,7 @@ fun TrendScoreBadge(
             ElectricCyan,
             Color(0x6600F0FF)
         )
-        TrendTier.DECLINING -> Triple(
+        TrendTier.LOW_ACTIVITY -> Triple(
             Color(0x3364748B),
             TextSecondaryDark,
             Color(0x6664748B)

@@ -77,7 +77,11 @@ fun HomeScreen(
                     if (uiState.isOffline) {
                         item {
                             OfflineBanner(
-                                message = "You're offline. Showing cached trends.",
+                                message = if (uiState.isShowingMock) {
+                                    "You're offline — showing sample trends."
+                                } else {
+                                    "You're offline — showing cached trends."
+                                },
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }

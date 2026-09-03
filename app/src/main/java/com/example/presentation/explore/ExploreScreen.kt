@@ -245,7 +245,11 @@ fun ExploreScreen(
             // Offline / error banner (only when we still have content to show)
             if (uiState.isOffline && uiState.trends.isNotEmpty()) {
                 OfflineBanner(
-                    message = "You're offline — showing recently cached trends.",
+                    message = if (uiState.isShowingMock) {
+                        "You're offline — showing sample trends."
+                    } else {
+                        "You're offline — showing cached trends."
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))

@@ -4,11 +4,17 @@ import com.example.data.local.AppDatabase
 import com.example.data.local.NewsCacheEntity
 import com.example.domain.model.BreakingNewsItem
 import com.example.domain.model.Country
+import com.example.domain.model.TimeFilter
 import com.example.domain.model.TrendCategory
 
 /**
  * Reads news from the local Room cache. Used when offline or when the remote
  * call fails, so the app can still show recently-fetched content.
+ *
+ * Cached rows do not retain a raw publication timestamp (only a relative
+ * `timeAgo` string and fetch time), so [timeFilter] is treated as best-effort
+ * here — precise recency filtering happens on the remote path, which is the
+ * primary source when online.
  */
 class CachedTrendDataSource(
     private val database: AppDatabase
@@ -18,7 +24,8 @@ class CachedTrendDataSource(
         category: TrendCategory,
         country: Country,
         query: String,
-        max: Int
+        max: Int,
+        timeFilter: TimeFilter
     ): DataSourceResult<List<BreakingNewsItem>> {
         val cached = database.trendDao().getAllCachedNews()
         if (cached.isEmpty()) return DataSourceResult.Empty
