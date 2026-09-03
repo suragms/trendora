@@ -78,7 +78,7 @@ fun SavedScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(20.dp)),
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Row(
@@ -115,7 +115,7 @@ fun SavedScreen(
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     ),
-                                    color = if (isSelected) Color.White else Color(0xFF71717A),
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
                             }
@@ -141,7 +141,7 @@ fun SavedScreen(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 90.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(uiState.savedTrends) { trend ->
+                            items(uiState.savedTrends, key = { it.id }) { trend ->
                                 TrendingListItem(
                                     trend = trend,
                                     onClick = { onNavigateToTrend(trend.id) },
@@ -171,7 +171,7 @@ fun SavedScreen(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 90.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            items(uiState.savedArticles) { article ->
+                            items(uiState.savedArticles, key = { it.id }) { article ->
                                 SavedArticleRowItem(
                                     article = article,
                                     onRemove = {
@@ -200,7 +200,7 @@ fun SavedScreen(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 90.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(uiState.recentlyViewed) { trend ->
+                            items(uiState.recentlyViewed, key = { it.id }) { trend ->
                                 TrendingListItem(
                                     trend = trend,
                                     onClick = { onNavigateToTrend(trend.id) },
@@ -230,7 +230,7 @@ fun SavedArticleRowItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp)),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(
@@ -253,11 +253,11 @@ fun SavedArticleRowItem(
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = ElectricCyan
                     )
-                    Text("•", color = Color(0xFF71717A))
+                    Text("•", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = article.timeAgo,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF71717A)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -270,13 +270,13 @@ fun SavedArticleRowItem(
                 Text(
                     text = "${article.category.iconEmoji} ${article.category.displayName} • 🔥 ${article.trendingScore}% Viral",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFFA1A1AA)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             IconButton(
                 onClick = onRemove,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(40.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Bookmark,
@@ -315,7 +315,7 @@ fun EmptySavedView(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFFA1A1AA),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )

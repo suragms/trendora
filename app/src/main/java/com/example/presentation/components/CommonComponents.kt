@@ -93,7 +93,7 @@ fun TrendingListItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
             .clickable(onClick = onClick)
             .testTag("trend_list_item_${trend.id}"),
         color = MaterialTheme.colorScheme.surfaceVariant
@@ -110,7 +110,7 @@ fun TrendingListItem(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF27272A)),
+                    .background(MaterialTheme.colorScheme.outline),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -133,11 +133,11 @@ fun TrendingListItem(
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = NeonPurple
                     )
-                    Text("•", color = Color(0xFF71717A))
+                    Text("•", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = trend.timeAgo,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF71717A)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -152,7 +152,7 @@ fun TrendingListItem(
                 Text(
                     text = "${trend.discussionsCount} • ${trend.searchVolume}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFFA1A1AA)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -176,7 +176,7 @@ fun TrendingListItem(
 fun GlassmorphicCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    borderColor: Color = Color.White.copy(alpha = 0.06f),
+    borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -481,7 +481,7 @@ fun CategoryChipRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        items(categories) { category ->
+        items(categories, key = { it.name }) { category ->
             val isSelected = category == selectedCategory
             val chipModifier = Modifier
                 .clip(RoundedCornerShape(24.dp))
@@ -495,7 +495,7 @@ fun CategoryChipRow(
                     } else {
                         Modifier
                             .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
                     }
                 )
                 .clickable { onCategorySelected(category) }
@@ -518,7 +518,7 @@ fun CategoryChipRow(
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         ),
-                        color = if (isSelected) Color.White else Color(0xFFA1A1AA)
+                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -539,7 +539,7 @@ fun SearchBarHeader(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp)),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(
@@ -552,7 +552,7 @@ fun SearchBarHeader(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = Color(0xFF71717A),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
 
@@ -563,7 +563,7 @@ fun SearchBarHeader(
                     Text(
                         text = placeholder,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF71717A),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -586,12 +586,12 @@ fun SearchBarHeader(
             if (query.isNotEmpty()) {
                 IconButton(
                     onClick = { onQueryChange("") },
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
                         contentDescription = "Clear search",
-                        tint = Color(0xFF71717A),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -600,9 +600,9 @@ fun SearchBarHeader(
             IconButton(
                 onClick = onVoiceClick,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF27272A))
+                    .background(MaterialTheme.colorScheme.outline)
                     .testTag("voice_search_button")
             ) {
                 Icon(
@@ -674,6 +674,49 @@ fun CircularConfidenceGauge(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+/**
+ * A friendly, reusable empty state shown when a list has no content.
+ * Uses theme colors so it renders correctly in both light and dark mode.
+ */
+@Composable
+fun EmptyState(
+    emoji: String,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(emoji, style = MaterialTheme.typography.displayMedium)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        if (actionLabel != null && onAction != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Button(
+                onClick = onAction,
+                colors = ButtonDefaults.buttonColors(containerColor = com.example.ui.theme.NeonPurple)
+            ) {
+                Text(actionLabel)
+            }
         }
     }
 }

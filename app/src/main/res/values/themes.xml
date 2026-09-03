@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.NoActionBar" />
+    <!--
+        Base application theme. All UI styling is handled by Compose
+        (TrendoraTheme in ui/theme), so this only needs to be a bare
+        NoActionBar theme to avoid the legacy action bar.
+    -->
+    <style name="Theme.Trendora" parent="android:Theme.DeviceDefault.NoActionBar" />
+
+    <!--
+        Android 12+ Splash Screen (androidx.core:core-splashscreen).
+        Shown while the app cold-starts, then replaced by Theme.Trendora.
+        Uses the Trendora launcher mark on a dark branded background.
+    -->
+    <style name="Theme.Trendora.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Trendora</item>
+    </style>
 </resources>

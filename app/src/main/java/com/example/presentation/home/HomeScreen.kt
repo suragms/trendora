@@ -164,7 +164,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
-                    items(uiState.trends) { trend ->
+                    items(uiState.trends, key = { it.id }) { trend ->
                         TrendingNowCard(
                             trend = trend,
                             onClick = { onNavigateToTrend(trend.id) },
@@ -190,7 +190,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp)
                     ) {
-                        items(uiState.breakingNews) { news ->
+                        items(uiState.breakingNews, key = { it.id }) { news ->
                             BreakingNewsCard(
                                 news = news,
                                 onSaveClick = { viewModel.toggleSaveArticle(news) }
@@ -227,13 +227,28 @@ fun HomeScreen(
                 )
             }
 
-            items(uiState.trends) { trend ->
-                TrendingListItem(
-                    trend = trend,
-                    onClick = { onNavigateToTrend(trend.id) },
-                    onToggleSave = { viewModel.toggleSaveTrend(trend) },
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
+            if (uiState.trends.isEmpty()) {
+                item {
+                    EmptyState(
+                        emoji = "🌐",
+                        title = "No trends to show right now",
+                        subtitle = if (uiState.isOffline) {
+                            "You're offline and no cached trends are available yet. Pull to refresh when you're back online."
+                        } else {
+                            "We couldn't find any trending topics. Pull down to try again."
+                        },
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
+                    )
+                }
+            } else {
+                items(uiState.trends, key = { it.id }) { trend ->
+                    TrendingListItem(
+                        trend = trend,
+                        onClick = { onNavigateToTrend(trend.id) },
+                        onToggleSave = { viewModel.toggleSaveTrend(trend) },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
                 }
@@ -307,7 +322,7 @@ fun HomeTopHeader(
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold
                         ),
-                        color = Color(0xFF71717A)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     PulsingLiveDot()
                 }
@@ -331,7 +346,7 @@ fun HomeTopHeader(
                     .size(44.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                     .testTag("notification_button")
             ) {
                 Box(contentAlignment = Alignment.TopEnd) {
@@ -395,7 +410,7 @@ fun TrendingNowCard(
             .clip(RoundedCornerShape(24.dp))
             .border(
                 1.dp,
-                Color.White.copy(alpha = 0.06f),
+                MaterialTheme.colorScheme.outlineVariant,
                 RoundedCornerShape(24.dp)
             )
             .clickable(onClick = onClick)
@@ -414,7 +429,7 @@ fun TrendingNowCard(
             ) {
                 Surface(
                     modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-                    color = Color(0xFF27272A)
+                    color = MaterialTheme.colorScheme.outline
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -432,12 +447,12 @@ fun TrendingNowCard(
 
                 IconButton(
                     onClick = onToggleSave,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = if (trend.isSaved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                         contentDescription = "Save trend",
-                        tint = if (trend.isSaved) ElectricCyan else Color(0xFF71717A),
+                        tint = if (trend.isSaved) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -499,19 +514,19 @@ fun TrendingNowCard(
                 Text(
                     text = trend.discussionsCount,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFA1A1AA)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     trend.sourceIcons.take(3).forEach { icon ->
                         Surface(
                             modifier = Modifier.clip(RoundedCornerShape(6.dp)),
-                            color = Color(0xFF27272A)
+                            color = MaterialTheme.colorScheme.outline
                         ) {
                             Text(
                                 text = icon,
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.SemiBold),
-                                color = Color(0xFFA1A1AA),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             )
                         }
@@ -532,7 +547,7 @@ fun BreakingNewsCard(
         modifier = modifier
             .width(300.dp)
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp)),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column {
@@ -616,23 +631,23 @@ fun BreakingNewsCard(
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = ElectricCyan
                         )
-                        Text("•", color = Color(0xFF71717A))
+                        Text("•", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = news.timeAgo,
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF71717A)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
                     IconButton(
                         onClick = onSaveClick,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.BookmarkBorder,
                             contentDescription = "Save news",
-                            tint = Color(0xFF71717A),
-                            modifier = Modifier.size(18.dp)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -785,7 +800,7 @@ fun RecentSearchesRow(
                 modifier = Modifier.padding(top = 6.dp)
             )
         }
-        items(searches) { query ->
+        items(searches, key = { it }) { query ->
             Surface(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
@@ -820,7 +835,7 @@ fun TrendingSuggestionsRow(
                 modifier = Modifier.padding(top = 6.dp)
             )
         }
-        items(suggestions) { item ->
+        items(suggestions, key = { it }) { item ->
             Surface(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))

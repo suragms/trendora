@@ -68,7 +68,7 @@ fun FuturisticBottomBar(
             .windowInsetsPadding(WindowInsets.navigationBars)
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.06f),
+                color = MaterialTheme.colorScheme.outlineVariant,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             ),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -113,7 +113,7 @@ fun FuturisticBottomBar(
                     }
                 } else {
                     val iconColor by animateColorAsState(
-                        targetValue = if (isSelected) ElectricCyan else Color(0xFF71717A),
+                        targetValue = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant,
                         animationSpec = spring(stiffness = Spring.StiffnessMedium),
                         label = "iconColor"
                     )

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 fun ShimmerBox(
     modifier: Modifier = Modifier,
     baseColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    shimmerColor: Color = Color.White.copy(alpha = 0.08f)
+    shimmerColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
 ) {
     val shimmerColors = listOf(
         baseColor,
@@ -63,7 +63,7 @@ fun TrendCardShimmer(modifier: Modifier = Modifier) {
         modifier = modifier
             .width(280.dp)
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp)),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column(
@@ -119,7 +119,7 @@ fun TrendListItemShimmer(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp)),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(

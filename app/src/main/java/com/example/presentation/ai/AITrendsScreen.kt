@@ -82,6 +82,16 @@ fun AITrendsScreen(
                 }
             }
 
+            // LOADING SKELETON
+            if (uiState.isLoading) {
+                item {
+                    ShimmerBox(modifier = Modifier.fillMaxWidth().height(120.dp))
+                }
+                items(3) {
+                    TrendListItemShimmer()
+                }
+            }
+
             // DAILY AI SUMMARY HERO BANNER
             item {
                 AIDailySummaryBanner(summary = uiState.dailySummary)
@@ -135,11 +145,22 @@ fun AITrendsScreen(
                 )
             }
 
-            items(uiState.aiTrends) { trend ->
-                AIPredictionCard(
-                    trend = trend,
-                    onClick = { onNavigateToTrend(trend.id) }
-                )
+            if (uiState.aiTrends.isEmpty()) {
+                item {
+                    EmptyState(
+                        emoji = "🤖",
+                        title = "No AI-analyzed trends yet",
+                        subtitle = "AI predictions appear here once live trend data is available. If you're offline, cached or sample trends will be analyzed instead.",
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                    )
+                }
+            } else {
+                items(uiState.aiTrends, key = { it.id }) { trend ->
+                    AIPredictionCard(
+                        trend = trend,
+                        onClick = { onNavigateToTrend(trend.id) }
+                    )
+                }
             }
 
             // ANALYZE WITH AI SECTION
@@ -265,7 +286,7 @@ fun AITrendsScreen(
                             "Forecast next week's tech trends",
                             "Explain the GTA 6 viral spike"
                         )
-                        items(samplePrompts) { prompt ->
+                        items(samplePrompts, key = { it }) { prompt ->
                             Surface(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
@@ -372,13 +393,13 @@ fun AITrendsScreen(
 
                                         IconButton(
                                             onClick = { viewModel.clearAIAnswer() },
-                                            modifier = Modifier.size(24.dp)
+                                            modifier = Modifier.size(40.dp)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
                                                 contentDescription = "Close",
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(16.dp)
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }

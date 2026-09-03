@@ -136,7 +136,7 @@ fun ExploreScreen(
                                 } else {
                                     Modifier
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                                        .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(20.dp))
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
                                 }
                             )
                             .clickable { viewModel.onCountrySelected(country) }
@@ -153,7 +153,7 @@ fun ExploreScreen(
                                 Text(
                                     text = country.displayName,
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isSelected) ElectricCyan else Color(0xFFA1A1AA)
+                                    color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -167,7 +167,7 @@ fun ExploreScreen(
                     Surface(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             .clickable { showSortMenu = true }
                             .testTag("sort_filter_button"),
                         color = MaterialTheme.colorScheme.surfaceVariant
@@ -222,7 +222,7 @@ fun ExploreScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .border(
                                 1.dp,
-                                if (isSelected) ElectricCyan else Color.White.copy(alpha = 0.04f),
+                                if (isSelected) ElectricCyan else MaterialTheme.colorScheme.outlineVariant,
                                 RoundedCornerShape(16.dp)
                             )
                             .clickable { viewModel.onTimeFilterSelected(timeFilter) },
@@ -233,7 +233,7 @@ fun ExploreScreen(
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             ),
-                            color = if (isSelected) ElectricCyan else Color(0xFF71717A),
+                            color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
                         )
                     }
@@ -256,7 +256,7 @@ fun ExploreScreen(
             } else if (uiState.errorMessage != null && uiState.trends.isNotEmpty()) {
                 ErrorBanner(
                     message = uiState.errorMessage ?: "",
-                    onRetry = { viewModel.clearError() },
+                    onRetry = { viewModel.refresh() },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -265,11 +265,14 @@ fun ExploreScreen(
             // Main Content: Loading / Grid or List
             when {
                 uiState.isLoading && uiState.trends.isEmpty() -> {
-                    Box(
+                    LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 90.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        CircularProgressIndicator(color = ElectricCyan)
+                        items(5) {
+                            TrendListItemShimmer()
+                        }
                     }
                 }
 
@@ -291,7 +294,7 @@ fun ExploreScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Button(
-                                onClick = { viewModel.clearError() },
+                                onClick = { viewModel.refresh() },
                                 colors = ButtonDefaults.buttonColors(containerColor = NeonPurple)
                             ) {
                                 Text("Retry")
@@ -334,7 +337,7 @@ fun ExploreScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.trends) { trend ->
+                        items(uiState.trends, key = { it.id }) { trend ->
                             ExploreGridCard(
                                 trend = trend,
                                 onClick = { onNavigateToTrend(trend.id) },
@@ -350,7 +353,7 @@ fun ExploreScreen(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 90.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.trends) { trend ->
+                        items(uiState.trends, key = { it.id }) { trend ->
                             TrendingListItem(
                                 trend = trend,
                                 onClick = { onNavigateToTrend(trend.id) },
@@ -374,7 +377,7 @@ fun ExploreGridCard(
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
             .clickable(onClick = onClick),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
@@ -395,13 +398,13 @@ fun ExploreGridCard(
 
                 IconButton(
                     onClick = onToggleSave,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = if (trend.isSaved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                         contentDescription = "Save",
-                        tint = if (trend.isSaved) ElectricCyan else Color(0xFF71717A),
-                        modifier = Modifier.size(16.dp)
+                        tint = if (trend.isSaved) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

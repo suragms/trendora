@@ -114,14 +114,56 @@ fun TrendDetailScreen(
     ) { innerPadding ->
         val trend = uiState.trend
 
-        if (trend == null) {
+        if (trend == null && uiState.isLoading) {
+            // Shimmer skeleton for detail screen
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+                ShimmerBox(modifier = Modifier.fillMaxWidth().height(24.dp))
+                ShimmerBox(modifier = Modifier.fillMaxWidth(0.6f).height(16.dp))
+                ShimmerBox(modifier = Modifier.fillMaxWidth().height(200.dp))
+                ShimmerBox(modifier = Modifier.fillMaxWidth().height(160.dp))
+                repeat(2) {
+                    ShimmerBox(modifier = Modifier.fillMaxWidth().height(80.dp))
+                }
+            }
+        } else if (trend == null) {
+            // The trend id did not resolve (e.g. a stale/deep link). Show a
+            // friendly dead-end with a way back instead of an infinite spinner.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = NeonPurple)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    Text("📭", style = MaterialTheme.typography.displayLarge)
+                    Text(
+                        text = "Unable to load this trend",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "This topic may no longer be available. Try browsing the Explore tab.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(
+                        onClick = onBackClick,
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonPurple)
+                    ) {
+                        Text("Go Back")
+                    }
+                }
             }
         } else {
             LazyColumn(
@@ -162,14 +204,14 @@ fun TrendDetailScreen(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(12.dp))
                                             .clickable { viewModel.setTimeframe(tf) },
-                                        color = if (isSelected) ElectricCyan else Color(0xFF27272A)
+                                        color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.outline
                                     ) {
                                         Text(
                                             text = tf.title,
                                             style = MaterialTheme.typography.labelSmall.copy(
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                             ),
-                                            color = if (isSelected) Color.Black else Color(0xFFA1A1AA),
+                                            color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                         )
                                     }
@@ -233,11 +275,11 @@ fun TrendDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                items(trend.aiAnalysis.relatedTopics) { topic ->
+                                items(trend.aiAnalysis.relatedTopics, key = { it }) { topic ->
                                     Surface(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(14.dp))
-                                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+                                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                                             .clickable { onTopicClick(topic) },
                                         color = MaterialTheme.colorScheme.surfaceVariant
                                     ) {
@@ -264,7 +306,7 @@ fun TrendDetailScreen(
                         )
                     }
 
-                    items(trend.discussions) { discussion ->
+                    items(trend.discussions, key = { it.id }) { discussion ->
                         DiscussionCard(discussion = discussion)
                     }
                 }
@@ -420,7 +462,7 @@ fun AIDeepDiveCard(
 
             IconButton(
                 onClick = onRefreshAI,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(40.dp)
             ) {
                 if (isAnalyzing) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), color = ElectricCyan, strokeWidth = 2.dp)
@@ -577,7 +619,7 @@ fun DiscussionCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(20.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column(

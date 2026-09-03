@@ -523,7 +523,7 @@ fun AITrendAnalysisCard(
             IconButton(
                 onClick = onShare,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(40.dp)
                     .semantics { contentDescription = "Share AI analysis" }
             ) {
                 Icon(

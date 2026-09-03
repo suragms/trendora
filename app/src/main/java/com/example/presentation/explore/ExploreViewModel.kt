@@ -64,6 +64,8 @@ class ExploreViewModel(
     private val _lastError = MutableStateFlow<String?>(null)
     private val _isOffline = MutableStateFlow(false)
     private val _isShowingMock = MutableStateFlow(false)
+    // Incremented to force the results flow to re-emit (used by the Retry button).
+    private val _refreshTrigger = MutableStateFlow(0)
 
     private data class StatusState(
         val isLoading: Boolean,
@@ -94,8 +96,9 @@ class ExploreViewModel(
 
     private val resultsFlow = combine(
         filterConfigFlow,
-        viewConfigFlow
-    ) { filter, view ->
+        viewConfigFlow,
+        _refreshTrigger
+    ) { filter, view, _ ->
         Pair(filter, view)
     }.flatMapLatest { (filter, view) ->
         trendRepository.getExploreTrends(
@@ -180,6 +183,12 @@ class ExploreViewModel(
 
     fun clearError() {
         _lastError.value = null
+    }
+
+    /** Clears any error message and forces a fresh data load. */
+    fun refresh() {
+        _lastError.value = null
+        _refreshTrigger.value++
     }
 
     fun toggleGridView() {
