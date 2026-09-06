@@ -12,15 +12,20 @@ import java.util.Locale
 /**
  * Computes a Trendora [TrendScore] (0-100) and related fields from real news data.
  *
- * IMPORTANT: GNews does NOT provide a trend/virality score. The score below is a
- * Trendora-computed estimate derived from real signals we DO have:
- *   - Recency (how fresh the article is)
- *   - Source popularity (known, high-traffic outlets rank higher)
- *   - Article frequency (how many articles share this category/topic)
- *   - Category activity (share of the fetched set)
+ * IMPORTANT: GNews does NOT provide a trend/virality score, discussion counts,
+ * search volumes, or measured growth percentages. Trendora never presents such
+ * fabricated absolute metrics. Instead:
+ *   - The score is a Trendora-computed estimate derived from real signals we DO have:
+ *     - Recency (how fresh the article is)
+ *     - Source popularity (known, high-traffic outlets rank higher)
+ *     - Article frequency (how many articles share this category/topic)
+ *     - Category activity (share of the fetched set)
+ *   - "Social interest" / "Search interest" are qualitative bands
+ *     ("Very high" .. "Low") derived from those score components — never counts.
+ *   - Growth % and sentiment are deterministic estimates, explicitly labeled as such.
  *
- * This is clearly separate from the official API data and is never presented as
- * something GNews reported.
+ * All of this is clearly separate from the official API data and is never
+ * presented as something GNews reported.
  */
 object TrendScoreCalculator {
 
@@ -44,7 +49,7 @@ object TrendScoreCalculator {
         country: Country
     ): TrendItem {
         val score = calculateScore(article, allArticles)
-        val growth = computeGrowth(article, allArticles, score)
+        val growth = computeGrowth(article, score)
 
         return TrendItem(
             id = article.id,
@@ -52,11 +57,11 @@ object TrendScoreCalculator {
             category = article.category,
             score = score,
             growthPercentage = growth,
-            discussionsCount = "+${estimateMentions(article)} discussions",
-            searchVolume = "${estimateSearches(article)} searches",
+            discussionsCount = "${socialInterestBand(score)} social interest",
+            searchVolume = "${searchInterestBand(score)} search interest",
             timeAgo = article.timeAgo,
             country = country,
-            chartData = generateChartData(article),
+            chartData = generateChartData(score, growth),
             historyToday = listOf(
                 TrendHistoryPoint("Now", score.totalScore.toFloat())
             ),
@@ -68,10 +73,10 @@ object TrendScoreCalculator {
             aiAnalysis = AIAnalysis(
                 summary = article.summary.ifBlank { article.headline },
                 whyTrending = article.summary.ifBlank { article.headline },
-                sentiment = SentimentBreakdown(70, 20, 10, "Derived from recent news coverage"),
-                expectedGrowthPercent = (growth / 2).coerceIn(0, 100),
+                sentiment = estimateSentiment(score),
+                expectedGrowthPercent = (score.totalScore * 0.55 + 10).toInt().coerceIn(10, 90),
                 viralProbabilityPercent = score.totalScore,
-                aiConfidencePercent = 60,
+                aiConfidencePercent = 25,
                 growthTrajectory = when {
                     score.totalScore >= 80 -> "Rapid Exponential"
                     score.totalScore >= 50 -> "Steady Climb"
@@ -161,32 +166,58 @@ object TrendScoreCalculator {
         }
     }
 
-    /** A stable pseudo-random growth % in a plausible range (0..180). */
-    private fun computeGrowth(article: BreakingNewsItem, allArticles: List<BreakingNewsItem>, score: TrendScore): Int {
-        val seed = article.id.hashCode() and 0x7fffffff
-        val base = 20 + (seed % 100)
-        return (base + score.totalScore / 2).coerceIn(2, 180)
+    /**
+     * A deterministic Trendora estimate of growth % (0..180). GNews offers no
+     * measured growth, so this is derived from the real signals we do have:
+     * article freshness (recency) blended with the computed total score.
+     * Deterministic for a given article — never random, never presented as measured.
+     */
+    private fun computeGrowth(article: BreakingNewsItem, score: TrendScore): Int {
+        val freshness = recencyScore(article)
+        return (freshness * 0.5 + score.totalScore * 0.5).toInt().coerceIn(5, 180)
     }
 
-    private fun estimateMentions(article: BreakingNewsItem): String {
-        val seed = article.id.hashCode() and 0x7fffffff
-        val k = 4 + (seed % 120)
-        return "${k}K"
+    /**
+     * Qualitative reach level derived from the socialMentions component
+     * (itself a Trendora estimate from real source/frequency signals).
+     * Public so screens reuse the same label in the score-grid pill.
+     */
+    fun socialInterestBand(score: TrendScore): String = when {
+        score.socialMentions >= 85 -> "Very high"
+        score.socialMentions >= 65 -> "High"
+        score.socialMentions >= 45 -> "Moderate"
+        else -> "Low"
     }
 
-    private fun estimateSearches(article: BreakingNewsItem): String {
-        val seed = (article.id.hashCode() and 0x7fffffff)
-        val k = 10 + (seed % 700)
-        return "${k}K"
+    /** Qualitative search-interest level, derived from the searchGrowth component. */
+    fun searchInterestBand(score: TrendScore): String = when {
+        score.searchGrowth >= 85 -> "Very high"
+        score.searchGrowth >= 65 -> "High"
+        score.searchGrowth >= 45 -> "Moderate"
+        else -> "Low"
     }
 
-    private fun generateChartData(article: BreakingNewsItem): List<Float> {
-        val seed = article.id.hashCode()
-        val base = (seed % 20).coerceAtLeast(0)
+    /** Estimated sentiment breakdown — bounded, deterministic, and explicitly labeled an estimate. */
+    private fun estimateSentiment(score: TrendScore): SentimentBreakdown {
+        val pos = (score.socialMentions * 0.35 + 30).toInt().coerceIn(35, 70)
+        val neg = (score.totalScore / 6).toInt().coerceAtMost(18)
+        val neu = (100 - pos - neg).coerceIn(0, 100)
+        return SentimentBreakdown(
+            positivePercent = pos,
+            neutralPercent = neu,
+            negativePercent = neg,
+            summary = "Trendora estimate from coverage & activity signals — not measured social sentiment."
+        )
+    }
+
+    /** Deterministic, monotone sparkline shape derived from the real score + growth estimate. */
+    private fun generateChartData(score: TrendScore, growth: Int): List<Float> {
         val points = 8
+        val start = 0.25f + (score.totalScore / 100f) * 0.20f
+        val end = (0.55f + (score.totalScore / 100f) * 0.25f + growth / 400f).coerceAtMost(0.98f)
         return List(points) { i ->
-            val drift = (seed % (i + 3))
-            ((20 + base + i * 6 + (drift % 12)) / 100f).coerceIn(0.1f, 1f)
+            val t = i.toFloat() / (points - 1)
+            (start + (end - start) * t).coerceIn(0.1f, 1f)
         }
     }
 

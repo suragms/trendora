@@ -72,30 +72,28 @@ class AIRepositoryImpl(
                 try {
                     val summary = extractTag(response, "SUMMARY:")
                     val whyTrending = extractTag(response, "WHY_TRENDING:")
-                    val pos = extractTag(response, "SENTIMENT_POS:").toIntOrNull() ?: 75
-                    val neu = extractTag(response, "SENTIMENT_NEU:").toIntOrNull() ?: 18
-                    val neg = extractTag(response, "SENTIMENT_NEG:").toIntOrNull() ?: 7
+                    val pos = extractTag(response, "SENTIMENT_POS:").toIntOrNull() ?: 55
+                    val neu = extractTag(response, "SENTIMENT_NEU:").toIntOrNull() ?: 30
+                    val neg = extractTag(response, "SENTIMENT_NEG:").toIntOrNull() ?: 15
                     val sentimentSummary = extractTag(response, "SENTIMENT_SUMMARY:")
-                    val growth = extractTag(response, "EXPECTED_GROWTH:").toIntOrNull() ?: 88
-                    val viral = extractTag(response, "VIRAL_PROBABILITY:").toIntOrNull() ?: 84
-                    val confidence = extractTag(response, "AI_CONFIDENCE:").toIntOrNull() ?: 92
+                    val growth = extractTag(response, "EXPECTED_GROWTH:").toIntOrNull() ?: 60
+                    val viral = extractTag(response, "VIRAL_PROBABILITY:").toIntOrNull() ?: 65
+                    val confidence = extractTag(response, "AI_CONFIDENCE:").toIntOrNull() ?: 60
                     val trajectory = extractTag(response, "TRAJECTORY:")
                     val topics = extractTag(response, "RELATED_TOPICS:").split(",").map { it.trim() }.filter { it.isNotBlank() }
 
                     return AIAnalysis(
-                        summary = summary.ifBlank { "High-velocity momentum detected across global search and social discussions." },
-                        whyTrending = whyTrending.ifBlank { "Unprecedented spike in developer and news coverage over the last 24 hours." },
-                        sentiment = SentimentBreakdown(pos, neu, neg, sentimentSummary.ifBlank { "Largely positive outlook." }),
+                        summary = summary.ifBlank { "Notable coverage momentum detected across global news sources." },
+                        whyTrending = whyTrending.ifBlank { "Increased recent coverage and developer interest in this topic." },
+                        sentiment = SentimentBreakdown(pos, neu, neg, sentimentSummary.ifBlank { "Neutral outlook based on available coverage." }),
                         expectedGrowthPercent = growth,
                         viralProbabilityPercent = viral,
                         aiConfidencePercent = confidence,
-                        growthTrajectory = trajectory.ifBlank { "Rapid Exponential" },
+                        growthTrajectory = trajectory.ifBlank { "Steady Climb" },
                         relatedTopics = if (topics.isNotEmpty()) topics else listOf("Autonomous Systems", "Machine Intelligence", "Next-Gen Compute"),
-                        timeline = listOf(
-                            "04:00 UTC: Exponential spike in organic search queries",
-                            "08:30 UTC: Viral discourse across technical forums and news outlets",
-                            "Now: Sustained peak attention across global tech hubs"
-                        )
+                        // No timeline is requested from Gemini — never fabricate event
+                        // timestamps that were not actually observed.
+                        timeline = emptyList()
                     )
                 } catch (_: Exception) {
                     // Fall through to rule-based

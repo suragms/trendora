@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.remote.TrendScoreCalculator
 import com.example.domain.model.DiscussionItem
 import com.example.domain.model.TrendItem
 import com.example.presentation.ai.SentimentMiniBar
@@ -400,7 +401,7 @@ fun DetailHeroSection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             MetricPill(label = "Search Growth", value = "+${trend.score.searchGrowth}%", color = ElectricCyan)
-            MetricPill(label = "Social Volume", value = trend.discussionsCount, color = NeonPurple)
+            MetricPill(label = "Social Interest", value = TrendScoreCalculator.socialInterestBand(trend.score), color = NeonPurple)
             MetricPill(label = "News Coverage", value = "${trend.score.newsCoverage}%", color = AmberGold)
         }
     }

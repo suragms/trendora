@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.core.network.GeminiApiClient
 import com.example.core.network.NetworkMonitor
+import com.example.data.local.AiAnalysisCacheEntity
 import com.example.data.local.AppDatabase
 import com.example.domain.model.TrendAnalysisResult
 import kotlinx.coroutines.runBlocking
@@ -151,5 +152,51 @@ class AIRepositoryImplTest {
         val cached = repository.getCachedAnalysis("t1")
         assertNotNull(cached)
         assertEquals("AI market expanding rapidly.", cached?.trendSummary)
+    }
+
+    @Test
+    fun `stale cache older than 30 min is invalidated and triggers a fresh call`() = runBlocking {
+        // Seed a stale cache entry written 31 minutes ago.
+        db.trendDao().insertCachedAnalysis(
+            AiAnalysisCacheEntity(
+                trendId = "t1",
+                analysisJson = """{"trendSummary":"Stale cached summary.","analyzedAt":0}""",
+                trendTitle = "AI",
+                category = "Technology",
+                analyzedAt = System.currentTimeMillis() - 31 * 60 * 1000
+            )
+        )
+
+        val gemini = FakeGeminiClient(response = sampleJson, isConfigured = true)
+        val repository = repo(gemini, connected = true)
+
+        val result = repository.analyzeTrendStructured("t1", "AI", "Technology")
+
+        // Stale cache was ignored — a live API call was made and the fresh result returned.
+        assertEquals("AI market expanding rapidly.", result.trendSummary)
+        assertTrue(gemini.callCount >= 1)
+    }
+
+    @Test
+    fun `fresh cache within 30 min is returned without a new api call`() = runBlocking {
+        db.trendDao().insertCachedAnalysis(
+            AiAnalysisCacheEntity(
+                trendId = "t1",
+                // analyzedAt inside the JSON must be recent, because isRecent() reads it from the JSON.
+                analysisJson = """{"trendSummary":"Fresh cached summary.","analyzedAt":${System.currentTimeMillis() - 10 * 60 * 1000}}""",
+                trendTitle = "AI",
+                category = "Technology",
+                analyzedAt = System.currentTimeMillis() - 10 * 60 * 1000
+            )
+        )
+
+        val gemini = FakeGeminiClient(response = sampleJson, isConfigured = true)
+        val repository = repo(gemini, connected = true)
+
+        val result = repository.analyzeTrendStructured("t1", "AI", "Technology")
+
+        // Fresh cache hit — no duplicate API call, cached summary returned.
+        assertEquals("Fresh cached summary.", result.trendSummary)
+        assertEquals(0, gemini.callCount)
     }
 }

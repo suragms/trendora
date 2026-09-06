@@ -53,9 +53,9 @@ data class TrendItem(
     val title: String,
     val category: TrendCategory,
     val score: TrendScore,
-    val growthPercentage: Int, // e.g. +145%
-    val discussionsCount: String, // e.g. "+125K discussions"
-    val searchVolume: String, // e.g. "850K searches"
+    val growthPercentage: Int, // Trendora estimate (0..180), deterministic from real signals
+    val discussionsCount: String, // qualitative band, e.g. "High social interest" — never a fabricated count
+    val searchVolume: String, // qualitative band, e.g. "Very high search interest" — never a fabricated count
     val timeAgo: String,
     val country: Country,
     val chartData: List<Float>, // 7-10 normalized points for sparkline/graph

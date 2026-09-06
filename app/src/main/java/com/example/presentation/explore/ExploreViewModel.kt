@@ -113,7 +113,7 @@ class ExploreViewModel(
                 when (view.sort) {
                     SortOption.TREND_SCORE -> list.sortedByDescending { it.score.totalScore }
                     SortOption.GROWTH_VELOCITY -> list.sortedByDescending { it.growthPercentage }
-                    SortOption.DISCUSSIONS -> list.sortedByDescending { it.discussionsCount }
+                    SortOption.DISCUSSIONS -> list.sortedByDescending { it.score.socialMentions }
                     SortOption.RECENT -> list
                 }
             }

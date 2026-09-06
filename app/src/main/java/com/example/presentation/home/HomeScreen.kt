@@ -41,7 +41,7 @@ import com.example.ui.theme.*
 fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToTrend: (String) -> Unit,
-    onNavigateToProfile: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -107,7 +107,7 @@ fun HomeScreen(
                     greeting = uiState.userGreeting,
                     unreadNotifs = uiState.unreadNotificationsCount,
                     onNotifClick = { viewModel.setNotificationsDialogVisible(true) },
-                    onProfileClick = onNavigateToProfile,
+                    onSettingsClick = onNavigateToSettings,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }

@@ -37,7 +37,7 @@ sealed class Screen(val route: String) {
     object Explore : Screen("explore")
     object AITrends : Screen("ai_trends")
     object Saved : Screen("saved")
-    object Profile : Screen("profile")
+    object Settings : Screen("settings")
     object TrendDetails : Screen("trend_details/{trendId}") {
         fun createRoute(trendId: String) = "trend_details/$trendId"
     }
@@ -52,8 +52,7 @@ enum class NavigationItem(
     HOME("home", "Home", Icons.Filled.Whatshot, Icons.Outlined.Whatshot),
     EXPLORE("explore", "Explore", Icons.Filled.Explore, Icons.Outlined.Explore),
     AI("ai_trends", "AI Trends", Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome),
-    SAVED("saved", "Saved", Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder),
-    PROFILE("profile", "Profile", Icons.Filled.Person, Icons.Outlined.PersonOutline)
+    SAVED("saved", "Saved", Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder)
 }
 
 @Composable

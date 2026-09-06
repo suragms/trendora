@@ -24,9 +24,9 @@ import com.example.presentation.home.HomeScreen
 import com.example.presentation.home.HomeViewModel
 import com.example.presentation.navigation.FuturisticBottomBar
 import com.example.presentation.navigation.Screen
-import com.example.presentation.profile.ProfileScreen
-import com.example.presentation.profile.ProfileViewModel
 import com.example.presentation.saved.SavedScreen
+import com.example.presentation.settings.SettingsScreen
+import com.example.presentation.settings.SettingsViewModel
 import com.example.presentation.saved.SavedViewModel
 import com.example.ui.theme.TrendoraTheme
 
@@ -44,8 +44,7 @@ fun TrendoraApp(
             Screen.Home.route,
             Screen.Explore.route,
             Screen.AITrends.route,
-            Screen.Saved.route,
-            Screen.Profile.route
+            Screen.Saved.route
         )
 
         Scaffold(
@@ -85,8 +84,8 @@ fun TrendoraApp(
                         onNavigateToTrend = { trendId ->
                             navController.navigate(Screen.TrendDetails.createRoute(trendId))
                         },
-                        onNavigateToProfile = {
-                            navController.navigate(Screen.Profile.route)
+                        onNavigateToSettings = {
+                            navController.navigate(Screen.Settings.route)
                         }
                     )
                 }
@@ -124,10 +123,11 @@ fun TrendoraApp(
                     )
                 }
 
-                composable(Screen.Profile.route) {
-                    val profileViewModel: ProfileViewModel = viewModel(factory = container.viewModelFactory)
-                    ProfileScreen(
-                        viewModel = profileViewModel
+                composable(Screen.Settings.route) {
+                    val settingsViewModel: SettingsViewModel = viewModel(factory = container.viewModelFactory)
+                    SettingsScreen(
+                        viewModel = settingsViewModel,
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
 
