@@ -99,9 +99,3 @@ enum class NotificationType {
     DAILY_BRIEF,
     GENERAL
 }
-
-data class UserStats(
-    val trendsViewed: Int = 142,
-    val savedItems: Int = 18,
-    val topicsFollowed: Int = 9
-)

@@ -3,7 +3,6 @@ package com.example.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.data.local.AppDatabase
@@ -11,10 +10,8 @@ import com.example.data.local.NotificationEntity
 import com.example.domain.model.Country
 import com.example.domain.model.NotificationItem
 import com.example.domain.model.NotificationType
-import com.example.domain.model.UserStats
 import com.example.domain.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "trendora_preferences")
@@ -26,7 +23,6 @@ class UserPreferencesRepositoryImpl(
 
     private val KEY_DARK_MODE = booleanPreferencesKey("dark_mode")
     private val KEY_COUNTRY = stringPreferencesKey("selected_country")
-    private val KEY_VIEWS_COUNT = intPreferencesKey("views_count")
 
     private val KEY_NOTIF_BREAKING = booleanPreferencesKey("notif_breaking")
     private val KEY_NOTIF_AI = booleanPreferencesKey("notif_ai")
@@ -41,27 +37,6 @@ class UserPreferencesRepositoryImpl(
     override val selectedCountry: Flow<Country> = context.dataStore.data.map { prefs ->
         val code = prefs[KEY_COUNTRY] ?: Country.GLOBAL.name
         try { Country.valueOf(code) } catch (e: Exception) { Country.GLOBAL }
-    }
-
-    override val notificationSettings: Flow<Map<String, Boolean>> = context.dataStore.data.map { prefs ->
-        mapOf(
-            "Breaking Trends" to (prefs[KEY_NOTIF_BREAKING] ?: true),
-            "AI Trends & Predictions" to (prefs[KEY_NOTIF_AI] ?: true),
-            "Technology & Startups" to (prefs[KEY_NOTIF_TECH] ?: true),
-            "Entertainment & Gaming" to (prefs[KEY_NOTIF_ENTERTAINMENT] ?: true),
-            "Daily Intelligence Brief" to (prefs[KEY_NOTIF_DAILY] ?: true)
-        )
-    }
-
-    override val userStats: Flow<UserStats> = combine(
-        context.dataStore.data.map { it[KEY_VIEWS_COUNT] ?: 142 },
-        database.trendDao().getAllSavedTrends()
-    ) { views, savedTrends ->
-        UserStats(
-            trendsViewed = views,
-            savedItems = savedTrends.size,
-            topicsFollowed = 12
-        )
     }
 
     override suspend fun setDarkMode(enabled: Boolean) {
@@ -88,11 +63,14 @@ class UserPreferencesRepositoryImpl(
         }
     }
 
-    override suspend fun incrementViewCount() {
-        context.dataStore.edit { prefs ->
-            val current = prefs[KEY_VIEWS_COUNT] ?: 142
-            prefs[KEY_VIEWS_COUNT] = current + 1
-        }
+    override val notificationSettings: Flow<Map<String, Boolean>> = context.dataStore.data.map { prefs ->
+        mapOf(
+            "Breaking Trends" to (prefs[KEY_NOTIF_BREAKING] ?: true),
+            "AI Trends & Predictions" to (prefs[KEY_NOTIF_AI] ?: true),
+            "Technology & Startups" to (prefs[KEY_NOTIF_TECH] ?: true),
+            "Entertainment & Gaming" to (prefs[KEY_NOTIF_ENTERTAINMENT] ?: true),
+            "Daily Intelligence Brief" to (prefs[KEY_NOTIF_DAILY] ?: true)
+        )
     }
 
     override fun getNotifications(): Flow<List<NotificationItem>> {

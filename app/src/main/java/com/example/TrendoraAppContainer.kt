@@ -22,8 +22,8 @@ import com.example.presentation.ai.AITrendsViewModel
 import com.example.presentation.detail.TrendDetailViewModel
 import com.example.presentation.explore.ExploreViewModel
 import com.example.presentation.home.HomeViewModel
-import com.example.presentation.profile.ProfileViewModel
 import com.example.presentation.saved.SavedViewModel
+import com.example.presentation.settings.SettingsViewModel
 
 class TrendoraAppContainer(context: Context) {
     val database: AppDatabase = AppDatabase.getDatabase(context)
@@ -64,8 +64,8 @@ class TrendoraAppContainer(context: Context) {
                 modelClass.isAssignableFrom(SavedViewModel::class.java) -> {
                     SavedViewModel(trendRepository, newsRepository) as T
                 }
-                modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
-                    ProfileViewModel(userPreferencesRepository, trendRepository) as T
+                modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
+                    SettingsViewModel(userPreferencesRepository, trendRepository) as T
                 }
                 modelClass.isAssignableFrom(TrendDetailViewModel::class.java) -> {
                     TrendDetailViewModel(trendRepository, aiRepository) as T

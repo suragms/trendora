@@ -28,7 +28,7 @@ data class HomeUiState(
     val errorMessage: String? = null,
     val isShowingCached: Boolean = false,
     val isShowingMock: Boolean = false,
-    val userGreeting: String = "Good Morning, Surag 👋"
+    val userGreeting: String = "What's trending today?"
 )
 
 private data class HomeContentData(

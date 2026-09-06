@@ -25,9 +25,9 @@ import com.example.presentation.home.HomeViewModel
 import com.example.presentation.navigation.FuturisticBottomBar
 import com.example.presentation.navigation.Screen
 import com.example.presentation.saved.SavedScreen
+import com.example.presentation.saved.SavedViewModel
 import com.example.presentation.settings.SettingsScreen
 import com.example.presentation.settings.SettingsViewModel
-import com.example.presentation.saved.SavedViewModel
 import com.example.ui.theme.TrendoraTheme
 
 @Composable

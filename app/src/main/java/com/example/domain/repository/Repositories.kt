@@ -81,11 +81,9 @@ interface UserPreferencesRepository {
     val isDarkMode: Flow<Boolean>
     val selectedCountry: Flow<Country>
     val notificationSettings: Flow<Map<String, Boolean>>
-    val userStats: Flow<UserStats>
     suspend fun setDarkMode(enabled: Boolean)
     suspend fun setSelectedCountry(country: Country)
     suspend fun updateNotificationSetting(key: String, enabled: Boolean)
-    suspend fun incrementViewCount()
     fun getNotifications(): Flow<List<NotificationItem>>
     suspend fun addNotification(notification: NotificationItem)
     suspend fun markNotificationAsRead(id: String)

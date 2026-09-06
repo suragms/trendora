@@ -10,6 +10,8 @@
 
 Trendora is a modern Android app built with **Kotlin + Jetpack Compose** that pulls **real headlines from the GNews API**, surfaces a **Trendora-calculated 0–100 trend score** for each topic, and layers on **Gemini-powered AI analysis** (sentiment, growth prediction, viral probability, and confidence). It is designed to be **offline-first**: live data is cached in a local Room database so the app never shows a broken blank screen, even when you're offline or the API fails.
 
+**Trendora does not require an account or login.** It is fully anonymous — open the app and start exploring immediately. Everything is stored locally on your device.
+
 ## Features
 
 - 🏠 **Home** — Top headlines, breaking news, and category news from the real GNews API.
@@ -17,7 +19,7 @@ Trendora is a modern Android app built with **Kotlin + Jetpack Compose** that pu
 - 🤖 **AI Trends** — Gemini-powered predictive analytics: sentiment, growth prediction, viral probability, and AI confidence.
 - 📈 **Trend Details** — Structured AI deep-dive, sentiment breakdown, related topics, and multi-platform discussions.
 - 🔖 **Saved** — Bookmark trends and articles locally; persists across app restarts via Room.
-- 👤 **Profile** — User preferences (dark mode, country) persisted in DataStore.
+- ⚙️ **Settings** — Dark mode, preferred region, and trend alert preferences, persisted locally in DataStore.
 - 📴 **Offline-first** — Remote → Cache → Mock fallback chain. Never a broken empty screen.
 - 🏷️ **Trend Score** — A **Trendora-calculated** 0–100 score (Viral / Rising / Popular / Low Activity) derived from real signals such as recency, source popularity, and category activity. GNews does **not** provide a virality score; this is clearly a Trendora estimate.
 
@@ -126,6 +128,17 @@ Trendora is designed to keep working without a connection:
 | Offline + no cache | Bundled sample data |
 
 A subtle status banner tells you which source you're looking at: *"You are offline — showing cached trends."* or *"… showing sample trends."*
+
+## Anonymous Usage — No Account, No Login
+
+Trendora is anonymous by design. There is **no sign-up, sign-in, or account** — no email, no password, no profile. The app works immediately after installation.
+
+- **Saved content** (trends & articles) is stored locally in a Room database and persists across restarts.
+- **Recent searches & recently viewed** are kept on-device.
+- **AI analysis cache** and **news cache** are stored locally for fast, offline-capable lookups.
+- **App preferences** (dark mode, preferred region, trend alerts) are stored in DataStore.
+
+Nothing is uploaded to a user account, because no account exists. Clear search history & cache anytime from **Settings** (open the ⚙ gear on the Home screen).
 
 ## AI Features
 
