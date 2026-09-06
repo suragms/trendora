@@ -64,7 +64,55 @@ The fallback order is: **Remote → Cache → Mock**. The UI is never left on a 
 
 *(Add your screenshots here, e.g. `docs/screenshots/home.png`.)*
 
-## Installation
+## Download Trendora
+
+Get the latest ready-to-install APK from GitHub Releases:
+
+**[⬇️ Download Trendora-v1.0.0.apk (Latest Release)](https://github.com/suragms/trendora/releases/latest)**
+
+Direct asset link (after the `v1.0.0` release is published):
+
+`https://github.com/suragms/trendora/releases/latest/download/Trendora-v1.0.0.apk`
+
+### What you get
+
+Trendora is an **AI-powered trend intelligence** Android app. It shows live headlines from GNews, a Trendora-calculated 0–100 trend score, and Gemini-powered analysis (sentiment, growth, viral probability). Browse **Home**, **Explore**, **AI Trends**, and **Saved** — no account required.
+
+### Requirements
+
+| Requirement | Detail |
+| ----------- | ------ |
+| OS | Android 7.0 (API 24) or newer |
+| Network | Internet recommended for live news & AI (offline cache/mock fallback included) |
+| Account | **None** — no login, register, or profile |
+| Sideloading | Allow install from unknown sources / browser |
+
+### Install on your phone
+
+1. Open the [latest release](https://github.com/suragms/trendora/releases/latest) on your Android device (or download on a PC and transfer the APK).
+2. Tap **Trendora-v1.0.0.apk** under **Assets**.
+3. If prompted, allow installs from your browser/file manager.
+4. Open the APK and tap **Install**.
+5. Launch **Trendora** — you go straight to Home (Splash → Home). No sign-in screen.
+
+### Notes
+
+- The public release APK is a **debug-signed** build suitable for demo/portfolio distribution. For Play Store, use a release-signed AAB (see [`RELEASE.md`](RELEASE.md)).
+- API keys for the published APK are injected at CI build time from **GitHub Actions Secrets** (`GNEWS_API_KEY`, `GEMINI_API_KEY`) — they are never stored in this repository.
+
+### Maintainers: publish a new APK release
+
+1. In the GitHub repo → **Settings → Secrets and variables → Actions**, add:
+   - `GNEWS_API_KEY`
+   - `GEMINI_API_KEY`
+2. Commit/push the latest `main` (including `.github/workflows/release-apk.yml`).
+3. Create a GitHub Release with tag **`v1.0.0`** (or bump, e.g. `v1.0.1`):
+   - GitHub UI: **Releases → Draft a new release → Choose tag `v1.0.0` → Publish release**
+   - or CLI: `gh release create v1.0.0 --title "Trendora v1.0.0" --generate-notes`
+4. The **Release APK** workflow builds the APK and uploads **`Trendora-v1.0.0.apk`** to that release’s **Assets**.
+5. Users download from **Releases → Latest → Assets**.
+
+## Installation (developers)
 
 **Prerequisites:**
 
