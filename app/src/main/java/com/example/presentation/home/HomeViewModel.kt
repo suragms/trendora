@@ -26,6 +26,9 @@ data class HomeUiState(
     val showNotificationsDialog: Boolean = false,
     val isOffline: Boolean = false,
     val errorMessage: String? = null,
+    /** Soft live-unavailable status (rate limit / remote fail with cache). */
+    val softStatusMessage: String? = null,
+    val canRetryLive: Boolean = true,
     val isShowingCached: Boolean = false,
     val isShowingMock: Boolean = false,
     val userGreeting: String = defaultGreeting()
@@ -61,6 +64,8 @@ private data class HomeFilterState(
 private data class HomeFlags(
     val isOffline: Boolean,
     val errorMessage: String?,
+    val softStatusMessage: String?,
+    val canRetryLive: Boolean,
     val isShowingCached: Boolean,
     val isShowingMock: Boolean
 )
@@ -79,8 +84,11 @@ class HomeViewModel(
     private val _isLoading = MutableStateFlow(true)
     private val _isOffline = MutableStateFlow(false)
     private val _errorMessage = MutableStateFlow<String?>(null)
+    private val _softStatusMessage = MutableStateFlow<String?>(null)
+    private val _canRetryLive = MutableStateFlow(true)
     private val _isShowingCached = MutableStateFlow(false)
     private val _isShowingMock = MutableStateFlow(false)
+    private var lastManualRefreshAtMs: Long = 0L
 
     private val contentDataFlow: Flow<HomeContentData> = _selectedCategory.flatMapLatest { cat ->
         combine(
@@ -110,11 +118,28 @@ class HomeViewModel(
         HomeFilterState(cat, query, refreshing, voiceDialog, notifDialog)
     }
 
-    // Fold the two flag flows into one so the final combine stays at 5 named params.
+    // Fold flag flows so the final combine stays at a manageable arity.
+    private data class StatusFlags(
+        val isOffline: Boolean,
+        val errorMessage: String?,
+        val softStatusMessage: String?,
+        val canRetryLive: Boolean
+    )
+
     private val flagsFlow: Flow<HomeFlags> = combine(
-        _isOffline, _errorMessage, _isShowingCached, _isShowingMock
-    ) { isOffline, errorMessage, showingCached, showingMock ->
-        HomeFlags(isOffline, errorMessage, showingCached, showingMock)
+        combine(_isOffline, _errorMessage, _softStatusMessage, _canRetryLive) { offline, error, soft, canRetry ->
+            StatusFlags(offline, error, soft, canRetry)
+        },
+        combine(_isShowingCached, _isShowingMock) { cached, mock -> cached to mock }
+    ) { status, source ->
+        HomeFlags(
+            isOffline = status.isOffline,
+            errorMessage = status.errorMessage,
+            softStatusMessage = status.softStatusMessage,
+            canRetryLive = status.canRetryLive,
+            isShowingCached = source.first,
+            isShowingMock = source.second
+        )
     }
 
     val uiState: StateFlow<HomeUiState> = combine(
@@ -145,6 +170,8 @@ class HomeViewModel(
             isRefreshing = filter.isRefreshing,
             isOffline = flags.isOffline,
             errorMessage = flags.errorMessage,
+            softStatusMessage = flags.softStatusMessage,
+            canRetryLive = flags.canRetryLive,
             isShowingCached = flags.isShowingCached,
             isShowingMock = flags.isShowingMock,
             showVoiceDialog = filter.showVoiceDialog,
@@ -171,7 +198,17 @@ class HomeViewModel(
                 _isOffline.value = state.isOffline
                 _isShowingCached.value = state.fromCache
                 _isShowingMock.value = state.fromMock
-                if (state.errorMessage != null) _errorMessage.value = state.errorMessage
+                _canRetryLive.value = state.canRetry
+                if (state.errorMessage != null && state.isSoftStatus) {
+                    _softStatusMessage.value = state.errorMessage
+                    _errorMessage.value = null
+                } else if (state.errorMessage != null) {
+                    _errorMessage.value = state.errorMessage
+                    _softStatusMessage.value = null
+                } else {
+                    _errorMessage.value = null
+                    _softStatusMessage.value = null
+                }
             }
         }
     }
@@ -206,6 +243,15 @@ class HomeViewModel(
 
     fun refreshData() {
         viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            // Client-side cooldown: rapid pull-to-refresh / Retry must not hammer GNews.
+            if (!_canRetryLive.value) {
+                return@launch
+            }
+            if (now - lastManualRefreshAtMs < MANUAL_REFRESH_COOLDOWN_MS) {
+                return@launch
+            }
+            lastManualRefreshAtMs = now
             _isRefreshing.value = true
             trendRepository.refreshTrends()
             kotlinx.coroutines.delay(600)
@@ -218,14 +264,16 @@ class HomeViewModel(
         _isOffline.value = offline
     }
 
-    /** Clears a transient error message shown in the UI. */
+    /** Clears a transient error / soft-status message shown in the UI. */
     fun clearError() {
         _errorMessage.value = null
+        _softStatusMessage.value = null
     }
 
     /** Simulates a load failure so the retry/error state can be exercised (for testing). */
     fun triggerSimulatedLoadError() {
         _errorMessage.value = "Something went wrong while loading your trends."
+        _softStatusMessage.value = null
     }
 
     fun setVoiceDialogVisible(visible: Boolean) {
@@ -250,5 +298,9 @@ class HomeViewModel(
                 )
             )
         }
+    }
+
+    companion object {
+        private const val MANUAL_REFRESH_COOLDOWN_MS = 15_000L
     }
 }

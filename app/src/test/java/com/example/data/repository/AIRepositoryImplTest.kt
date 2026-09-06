@@ -34,7 +34,8 @@ class AIRepositoryImplTest {
 
     private class FakeGeminiClient(
         private var response: String? = null,
-        override val isConfigured: Boolean = true
+        override val isConfigured: Boolean = true,
+        override val isRateLimited: Boolean = false
     ) : GeminiApiClient() {
         var callCount = 0
         override suspend fun generateContent(prompt: String): String? {

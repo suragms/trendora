@@ -33,6 +33,18 @@ interface TrendDataSource {
     ): DataSourceResult<List<BreakingNewsItem>>
 }
 
+/** Classifies API failures for UI / cooldown decisions — never includes secrets. */
+enum class ApiErrorKind {
+    RATE_LIMITED,
+    UNAUTHORIZED,
+    FORBIDDEN,
+    SERVER_ERROR,
+    NETWORK,
+    EMPTY_RESPONSE,
+    NOT_CONFIGURED,
+    UNKNOWN
+}
+
 /**
  * Sealed result that models success / failure / empty so callers can build
  * user-friendly UI states without exposing raw exceptions.
@@ -43,6 +55,14 @@ sealed class DataSourceResult<out T> {
         val fromCache: Boolean = false,
         val fromMock: Boolean = false
     ) : DataSourceResult<T>()
-    data class Error(val userMessage: String, val code: Int? = null) : DataSourceResult<Nothing>()
+
+    data class Error(
+        val userMessage: String,
+        val code: Int? = null,
+        val kind: ApiErrorKind = ApiErrorKind.UNKNOWN,
+        /** Seconds until a live request may be attempted again (HTTP Retry-After). */
+        val retryAfterSeconds: Long? = null
+    ) : DataSourceResult<Nothing>()
+
     object Empty : DataSourceResult<Nothing>()
 }

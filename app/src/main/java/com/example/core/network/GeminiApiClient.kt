@@ -11,6 +11,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 open class GeminiApiClient {
     private val client = OkHttpClient.Builder()
@@ -28,6 +29,8 @@ open class GeminiApiClient {
         "your_gemini_key_here"
     )
 
+    private val rateLimitedUntilMs = AtomicLong(0L)
+
     private val apiKey: String
         get() = try {
             val key = BuildConfig.GEMINI_API_KEY.trim()
@@ -39,9 +42,17 @@ open class GeminiApiClient {
     open val isConfigured: Boolean
         get() = apiKey.isNotBlank()
 
+    /** True while Gemini calls are suppressed after HTTP 429. */
+    open val isRateLimited: Boolean
+        get() = System.currentTimeMillis() < rateLimitedUntilMs.get()
+
     open suspend fun generateContent(prompt: String): String? = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             Log.w(TAG, "Gemini API key is not configured")
+            return@withContext null
+        }
+        if (isRateLimited) {
+            Log.w(TAG, "Gemini API key is rate-limited; skipping request")
             return@withContext null
         }
 
@@ -74,6 +85,14 @@ open class GeminiApiClient {
                 if (!response.isSuccessful) {
                     // Log status only — never the request URL (contains the key).
                     Log.w(TAG, "Request failed with code: ${response.code}")
+                    if (response.code == 429) {
+                        val retryAfter = response.header("Retry-After")?.toLongOrNull()
+                            ?: DEFAULT_RATE_LIMIT_COOLDOWN_SEC
+                        rateLimitedUntilMs.set(
+                            System.currentTimeMillis() + retryAfter.coerceIn(1L, 86_400L) * 1000L
+                        )
+                        Log.w(TAG, "Gemini rate limited; cooldown applied")
+                    }
                     return@withContext null
                 }
                 val responseString = response.body?.string() ?: return@withContext null
@@ -96,5 +115,6 @@ open class GeminiApiClient {
 
     companion object {
         private const val TAG = "GeminiApiClient"
+        private const val DEFAULT_RATE_LIMIT_COOLDOWN_SEC = 15 * 60L
     }
 }

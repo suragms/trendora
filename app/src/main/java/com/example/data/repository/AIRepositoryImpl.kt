@@ -158,8 +158,8 @@ class AIRepositoryImpl(
                 if (result.isRecent()) {
                     return@withContext result
                 }
-                // Offline: use any cached analysis even if stale
-                if (!networkMonitor.isCurrentlyConnected()) {
+                // Offline or Gemini cooldown: prefer any cached analysis over a live call
+                if (!networkMonitor.isCurrentlyConnected() || geminiClient.isRateLimited) {
                     return@withContext result
                 }
             }
@@ -173,6 +173,18 @@ class AIRepositoryImpl(
         // 3. Check API configuration
         if (!analysisService.isConfigured) {
             return@withContext TrendAnalysisResult.NOT_CONFIGURED.copy(trendId = trendId)
+        }
+
+        // 3b. Rate-limited with no usable cache -> rule-based friendly fallback
+        if (geminiClient.isRateLimited) {
+            val olderCache = dao.getCachedAnalysis(trendId)
+            if (olderCache != null) {
+                return@withContext jsonToAnalysisResult(olderCache.analysisJson, trendId)
+            }
+            return@withContext ruleBasedAnalysis(trendId, trendTitle, category).copy(
+                whyTrending = "AI analysis is temporarily unavailable. Showing the latest available analysis.",
+                riskFactors = listOf("Live Gemini analysis is temporarily rate-limited")
+            )
         }
 
         // 4. Try Gemini API
@@ -193,6 +205,15 @@ class AIRepositoryImpl(
             } else {
                 // Complete fallback: rule-based analysis
                 ruleBasedAnalysis(trendId, trendTitle, category)
+            }
+        }
+
+        // If Gemini returned an empty/fallback-looking result while rate-limited mid-call,
+        // prefer stale cache when available.
+        if (geminiClient.isRateLimited) {
+            val olderCache = dao.getCachedAnalysis(trendId)
+            if (olderCache != null) {
+                return@withContext jsonToAnalysisResult(olderCache.analysisJson, trendId)
             }
         }
 

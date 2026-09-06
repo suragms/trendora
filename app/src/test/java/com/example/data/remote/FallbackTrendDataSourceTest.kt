@@ -177,5 +177,38 @@ class FallbackTrendDataSourceTest {
         val result = fallback.fetchNews(TrendCategory.SPORTS, Country.GLOBAL)
         assertTrue(result is DataSourceResult.Success)
         assertEquals("Cached", (result as DataSourceResult.Success).data[0].headline)
+        assertTrue(fallback.lastError.value?.kind == ApiErrorKind.RATE_LIMITED)
+        assertTrue(fallback.isRateLimitedNow())
+    }
+
+    @Test
+    fun `rate limit cooldown skips remote without retry`() = runBlocking {
+        val body = "".toResponseBody("application/json".toMediaType())
+        val service = FakeGNewsApiService(error = HttpException(Response.error<Any>(429, body)))
+        var clock = 1_000_000L
+        val remote = RemoteTrendDataSource(service, FakeNetworkMonitor(true), isConfigured = true)
+        val cached = CachedTrendDataSource(db)
+        val mock = MockTrendDataSource()
+        val fallback = FallbackTrendDataSource(remote, cached, mock, FakeNetworkMonitor(true)) { clock }
+
+        // First call hits 429 and enters cooldown
+        fallback.fetchNews(TrendCategory.ALL, Country.GLOBAL)
+        assertTrue(fallback.isRateLimitedNow())
+
+        // Clear the fake error so a remote call would succeed if attempted
+        service.error = null
+        service.response = responseWith("ShouldNotFetch")
+
+        // Second call within cooldown must not hit remote — still mock/cache
+        val second = fallback.fetchNews(TrendCategory.ALL, Country.GLOBAL)
+        assertTrue(second is DataSourceResult.Success)
+        assertTrue(fallback.lastError.value?.kind == ApiErrorKind.RATE_LIMITED)
+
+        // After cooldown, live request is allowed again
+        clock += FallbackTrendDataSource.DEFAULT_RATE_LIMIT_COOLDOWN_SEC * 1000L + 1
+        val third = fallback.fetchNews(TrendCategory.ALL, Country.GLOBAL)
+        assertTrue(third is DataSourceResult.Success)
+        assertEquals("ShouldNotFetch", (third as DataSourceResult.Success).data[0].headline)
+        assertEquals(null, fallback.lastError.value)
     }
 }

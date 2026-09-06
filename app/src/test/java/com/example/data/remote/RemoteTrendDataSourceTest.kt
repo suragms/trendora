@@ -139,7 +139,8 @@ class RemoteTrendDataSourceTest {
             isConfigured = true
         )
         val result = source.fetchNews(TrendCategory.ALL, Country.GLOBAL) as DataSourceResult.Error
-        assertEquals("API limit reached. Please try again later.", result.userMessage)
+        assertEquals(GNewsErrorMapper.RATE_LIMIT_FALLBACK_MESSAGE, result.userMessage)
+        assertEquals(ApiErrorKind.RATE_LIMITED, result.kind)
     }
 
     @Test

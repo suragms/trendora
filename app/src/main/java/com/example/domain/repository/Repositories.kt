@@ -5,13 +5,20 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * UI-facing load status for the real data layer, so screens can show
- * user-friendly states (offline, error, cached/mock) without raw exceptions.
+ * user-friendly states (offline, soft live-unavailable, cached/mock)
+ * without raw exceptions.
  */
 data class NewsLoadState(
     val isOffline: Boolean = false,
     val errorMessage: String? = null,
     val fromCache: Boolean = false,
-    val fromMock: Boolean = false
+    val fromMock: Boolean = false,
+    /** True when the status is informational (cached/mock after remote failure), not a hard failure. */
+    val isSoftStatus: Boolean = false,
+    /** Whether a live Retry is currently allowed (false during rate-limit cooldown). */
+    val canRetry: Boolean = true,
+    /** Seconds remaining before a live retry is allowed (rate-limit cooldown). */
+    val retryAfterSeconds: Long = 0L
 )
 
 interface TrendRepository {

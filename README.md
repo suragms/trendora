@@ -97,6 +97,7 @@ Trendora is an **AI-powered trend intelligence** app for Android. It surfaces li
 
 - Public GitHub APKs are **debug-signed** (fine for demo/portfolio sideloading). Play Store distribution needs a private upload keystore — see [`RELEASE.md`](RELEASE.md).
 - API keys for release builds are injected in CI from GitHub Actions Secrets only — never stored in this repository.
+- If GNews or Gemini hit a temporary quota limit, Trendora shows **cached or sample content** with a soft status message — it does not blank the screen or hammer the API.
 
 ### Maintainers: publish a release
 

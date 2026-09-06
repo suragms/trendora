@@ -26,8 +26,11 @@ data class ExploreUiState(
     val isGridView: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val softStatusMessage: String? = null,
+    val canRetryLive: Boolean = true,
     val isOffline: Boolean = false,
-    val isShowingMock: Boolean = false
+    val isShowingMock: Boolean = false,
+    val isShowingCached: Boolean = false
 )
 
 private data class FilterConfig(
@@ -62,20 +65,49 @@ class ExploreViewModel(
 
     private val _isLoading = MutableStateFlow(true)
     private val _lastError = MutableStateFlow<String?>(null)
+    private val _softStatus = MutableStateFlow<String?>(null)
+    private val _canRetryLive = MutableStateFlow(true)
     private val _isOffline = MutableStateFlow(false)
     private val _isShowingMock = MutableStateFlow(false)
+    private val _isShowingCached = MutableStateFlow(false)
+    private var lastManualRefreshAtMs: Long = 0L
     // Incremented to force the results flow to re-emit (used by the Retry button).
     private val _refreshTrigger = MutableStateFlow(0)
 
     private data class StatusState(
         val isLoading: Boolean,
         val errorMessage: String?,
+        val softStatusMessage: String?,
+        val canRetryLive: Boolean,
         val isOffline: Boolean,
-        val isShowingMock: Boolean
+        val isShowingMock: Boolean,
+        val isShowingCached: Boolean
     )
 
-    private val statusFlow = combine(_isLoading, _lastError, _isOffline, _isShowingMock) { loading, error, offline, mock ->
-        StatusState(loading, error, offline, mock)
+    private data class StatusPartA(
+        val isLoading: Boolean,
+        val errorMessage: String?,
+        val softStatusMessage: String?,
+        val canRetryLive: Boolean
+    )
+
+    private val statusFlow = combine(
+        combine(_isLoading, _lastError, _softStatus, _canRetryLive) { loading, error, soft, canRetry ->
+            StatusPartA(loading, error, soft, canRetry)
+        },
+        combine(_isOffline, _isShowingMock, _isShowingCached) { offline, mock, cached ->
+            Triple(offline, mock, cached)
+        }
+    ) { partA, trip ->
+        StatusState(
+            isLoading = partA.isLoading,
+            errorMessage = partA.errorMessage,
+            softStatusMessage = partA.softStatusMessage,
+            canRetryLive = partA.canRetryLive,
+            isOffline = trip.first,
+            isShowingMock = trip.second,
+            isShowingCached = trip.third
+        )
     }
 
     private val filterConfigFlow = combine(
@@ -140,8 +172,11 @@ class ExploreViewModel(
             isGridView = view.isGridView,
             isLoading = status.isLoading,
             errorMessage = status.errorMessage,
+            softStatusMessage = status.softStatusMessage,
+            canRetryLive = status.canRetryLive,
             isOffline = status.isOffline,
-            isShowingMock = status.isShowingMock
+            isShowingMock = status.isShowingMock,
+            isShowingCached = status.isShowingCached
         )
     }.stateIn(
         scope = viewModelScope,
@@ -155,8 +190,18 @@ class ExploreViewModel(
             trendRepository.getLoadState().collect { state ->
                 _isOffline.value = state.isOffline
                 _isShowingMock.value = state.fromMock
-                if (state.errorMessage != null) _lastError.value = state.errorMessage
-                else if (!state.isOffline) _lastError.value = null
+                _isShowingCached.value = state.fromCache
+                _canRetryLive.value = state.canRetry
+                if (state.errorMessage != null && state.isSoftStatus) {
+                    _softStatus.value = state.errorMessage
+                    _lastError.value = null
+                } else if (state.errorMessage != null) {
+                    _lastError.value = state.errorMessage
+                    _softStatus.value = null
+                } else if (!state.isOffline) {
+                    _lastError.value = null
+                    _softStatus.value = null
+                }
             }
         }
     }
@@ -183,11 +228,17 @@ class ExploreViewModel(
 
     fun clearError() {
         _lastError.value = null
+        _softStatus.value = null
     }
 
-    /** Clears any error message and forces a fresh data load. */
+    /** Clears soft/hard status and forces a fresh data load when cooldown allows. */
     fun refresh() {
+        val now = System.currentTimeMillis()
+        if (!_canRetryLive.value) return
+        if (now - lastManualRefreshAtMs < MANUAL_REFRESH_COOLDOWN_MS) return
+        lastManualRefreshAtMs = now
         _lastError.value = null
+        _softStatus.value = null
         _refreshTrigger.value++
     }
 
@@ -199,5 +250,9 @@ class ExploreViewModel(
         viewModelScope.launch {
             trendRepository.toggleSaveTrend(trend)
         }
+    }
+
+    companion object {
+        private const val MANUAL_REFRESH_COOLDOWN_MS = 15_000L
     }
 }

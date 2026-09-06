@@ -242,7 +242,7 @@ fun ExploreScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Offline / error banner (only when we still have content to show)
+            // Offline / soft live-unavailable banner (only when we still have content)
             if (uiState.isOffline && uiState.trends.isNotEmpty()) {
                 OfflineBanner(
                     message = if (uiState.isShowingMock) {
@@ -253,9 +253,18 @@ fun ExploreScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+            } else if (uiState.softStatusMessage != null && uiState.trends.isNotEmpty()) {
+                SoftStatusBanner(
+                    message = uiState.softStatusMessage ?: "",
+                    canRetry = uiState.canRetryLive,
+                    onRetry = { viewModel.refresh() },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             } else if (uiState.errorMessage != null && uiState.trends.isNotEmpty()) {
-                ErrorBanner(
+                SoftStatusBanner(
                     message = uiState.errorMessage ?: "",
+                    canRetry = uiState.canRetryLive,
                     onRetry = { viewModel.refresh() },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )

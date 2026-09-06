@@ -41,13 +41,22 @@ class NewsRepositoryImpl(
         return combine(
             dataSource.lastError,
             networkMonitor.isConnected,
-            dataSource.lastServedFrom
-        ) { error, connected, servedFrom ->
+            dataSource.lastServedFrom,
+            dataSource.rateLimitedUntilMs
+        ) { error, connected, servedFrom, rateLimitedUntil ->
+            val remainingSec = ((rateLimitedUntil - System.currentTimeMillis() + 999) / 1000)
+                .coerceAtLeast(0)
+            val fromCache = servedFrom == com.example.data.remote.ServedFrom.CACHE
+            val fromMock = servedFrom == com.example.data.remote.ServedFrom.MOCK
+            val soft = error != null && (fromCache || fromMock)
             NewsLoadState(
                 isOffline = !connected,
                 errorMessage = error?.userMessage,
-                fromCache = servedFrom == com.example.data.remote.ServedFrom.CACHE,
-                fromMock = servedFrom == com.example.data.remote.ServedFrom.MOCK
+                fromCache = fromCache,
+                fromMock = fromMock,
+                isSoftStatus = soft,
+                canRetry = remainingSec <= 0L,
+                retryAfterSeconds = remainingSec
             )
         }
     }

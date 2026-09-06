@@ -35,10 +35,16 @@ class RemoteTrendDataSource(
     ): DataSourceResult<List<BreakingNewsItem>> = withContext(Dispatchers.IO) {
         if (!isConfigured) {
             Log.w(TAG, "GNews API key is not configured")
-            return@withContext DataSourceResult.Error(GNewsErrorMapper.MISSING_KEY_MESSAGE)
+            return@withContext DataSourceResult.Error(
+                userMessage = GNewsErrorMapper.MISSING_KEY_MESSAGE,
+                kind = ApiErrorKind.NOT_CONFIGURED
+            )
         }
         if (!networkMonitor.isCurrentlyConnected()) {
-            return@withContext DataSourceResult.Error(GNewsErrorMapper.NO_INTERNET_MESSAGE)
+            return@withContext DataSourceResult.Error(
+                userMessage = GNewsErrorMapper.NO_INTERNET_MESSAGE,
+                kind = ApiErrorKind.NETWORK
+            )
         }
 
         try {
@@ -74,14 +80,28 @@ class RemoteTrendDataSource(
                 }
             }
 
-            if (mapped.isEmpty()) DataSourceResult.Empty else DataSourceResult.Success(mapped)
+            if (mapped.isEmpty()) {
+                DataSourceResult.Empty
+            } else {
+                DataSourceResult.Success(mapped)
+            }
         } catch (e: HttpException) {
+            val (message, kind) = GNewsErrorMapper.fromHttpCode(e.code(), isConfigured)
+            val retryAfter = parseRetryAfterSeconds(e)
+            if (e.code() == 429) {
+                Log.w(TAG, "GNews rate limited (HTTP 429); retryAfterSeconds=$retryAfter")
+            } else {
+                Log.w(TAG, "GNews HTTP error code=${e.code()}")
+            }
             DataSourceResult.Error(
-                userMessage = GNewsErrorMapper.fromHttpCode(e.code(), isConfigured),
-                code = e.code()
+                userMessage = message,
+                code = e.code(),
+                kind = kind,
+                retryAfterSeconds = retryAfter
             )
         } catch (e: Exception) {
-            DataSourceResult.Error(GNewsErrorMapper.fromThrowable(e))
+            val (message, kind) = GNewsErrorMapper.fromThrowable(e)
+            DataSourceResult.Error(userMessage = message, kind = kind)
         }
     }
 
@@ -96,6 +116,13 @@ class RemoteTrendDataSource(
 
     companion object {
         private const val TAG = "RemoteTrendDataSource"
+
+        /** Parses Retry-After as seconds (numeric) — never logs header values beyond the number. */
+        fun parseRetryAfterSeconds(e: HttpException): Long? {
+            val raw = e.response()?.headers()?.get("Retry-After") ?: return null
+            raw.trim().toLongOrNull()?.let { return it.coerceIn(1L, 86_400L) }
+            return null
+        }
     }
 }
 

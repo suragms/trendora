@@ -85,14 +85,36 @@ fun HomeScreen(
                         }
                     }
 
-                    // ERROR BANNER WITH RETRY
-                    if (uiState.errorMessage != null) {
+                    // Soft live-unavailable status (rate limit / remote fail with content)
+                    if (!uiState.isOffline && uiState.softStatusMessage != null) {
                         item {
-                            ErrorBanner(
-                                message = uiState.errorMessage ?: "",
+                            SoftStatusBanner(
+                                message = uiState.softStatusMessage ?: "",
+                                canRetry = uiState.canRetryLive,
                                 onRetry = {
                                     viewModel.clearError()
                                     viewModel.refreshData()
+                                },
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    }
+
+                    // Hard error only when there is no soft status (rare empty failure)
+                    if (!uiState.isOffline &&
+                        uiState.softStatusMessage == null &&
+                        uiState.errorMessage != null
+                    ) {
+                        item {
+                            ErrorBanner(
+                                message = uiState.errorMessage ?: "",
+                                onRetry = if (uiState.canRetryLive) {
+                                    {
+                                        viewModel.clearError()
+                                        viewModel.refreshData()
+                                    }
+                                } else {
+                                    null
                                 },
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
