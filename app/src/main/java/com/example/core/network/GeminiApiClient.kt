@@ -19,11 +19,20 @@ open class GeminiApiClient {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    /** Known non-secret placeholders that must never be treated as real keys. */
+    private val placeholderKeys = setOf(
+        "",
+        "MY_GEMINI_API_KEY",
+        "CI_PLACEHOLDER",
+        "YOUR_GEMINI_KEY",
+        "your_gemini_key_here"
+    )
+
     private val apiKey: String
         get() = try {
-            val key = BuildConfig.GEMINI_API_KEY
-            if (key == "MY_GEMINI_API_KEY" || key.isBlank()) "" else key
-        } catch (e: Exception) {
+            val key = BuildConfig.GEMINI_API_KEY.trim()
+            if (key in placeholderKeys) "" else key
+        } catch (_: Exception) {
             ""
         }
 
@@ -31,11 +40,16 @@ open class GeminiApiClient {
         get() = apiKey.isNotBlank()
 
     open suspend fun generateContent(prompt: String): String? = withContext(Dispatchers.IO) {
-        if (!isConfigured) return@withContext null
+        if (apiKey.isBlank()) {
+            Log.w(TAG, "Gemini API key is not configured")
+            return@withContext null
+        }
 
         try {
-            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
-            
+            // Key is only used for the request URL — never logged.
+            val url =
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$apiKey"
+
             val jsonBody = JSONObject().apply {
                 val contents = JSONArray().apply {
                     put(JSONObject().apply {
@@ -58,7 +72,8 @@ open class GeminiApiClient {
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    Log.w("GeminiApiClient", "Request failed with code: ${response.code}")
+                    // Log status only — never the request URL (contains the key).
+                    Log.w(TAG, "Request failed with code: ${response.code}")
                     return@withContext null
                 }
                 val responseString = response.body?.string() ?: return@withContext null
@@ -74,8 +89,12 @@ open class GeminiApiClient {
                 }
             }
         } catch (e: Exception) {
-            Log.e("GeminiApiClient", "Error calling Gemini API", e)
+            Log.e(TAG, "Error calling Gemini API", e)
         }
         null
+    }
+
+    companion object {
+        private const val TAG = "GeminiApiClient"
     }
 }

@@ -1,5 +1,6 @@
 package com.example.core.network
 
+import android.util.Log
 import com.example.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -17,6 +18,15 @@ import java.util.concurrent.TimeUnit
 object GNewsClient {
 
     private const val BASE_URL = "https://gnews.io/api/v4/"
+    private const val TAG = "GNewsClient"
+
+    /** Known non-secret placeholders that must never be treated as real keys. */
+    private val PLACEHOLDER_KEYS = setOf(
+        "",
+        "CI_PLACEHOLDER",
+        "YOUR_GNEWS_KEY",
+        "your_gnews_key_here"
+    )
 
     private val moshi: Moshi by lazy {
         Moshi.Builder()
@@ -25,8 +35,13 @@ object GNewsClient {
     }
 
     private val okHttpClient: OkHttpClient by lazy {
-        val logging = HttpLoggingInterceptor().apply {
-            // Sensitive query params (apikey) are not logged.
+        // BASIC would log full URLs (including apikey). Redact secrets before logging.
+        val logging = HttpLoggingInterceptor { message ->
+            val redacted = message
+                .replace(Regex("(?i)apikey=[^&\\s\"']+"), "apikey=***")
+                .replace(Regex("(?i)([?&]key)=[^&\\s\"']+"), "$1=***")
+            Log.d(TAG, redacted)
+        }.apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }
         OkHttpClient.Builder()
@@ -38,7 +53,10 @@ object GNewsClient {
     }
 
     val apiKey: String
-        get() = BuildConfig.GNEWS_API_KEY.trim()
+        get() {
+            val key = BuildConfig.GNEWS_API_KEY.trim()
+            return if (key in PLACEHOLDER_KEYS) "" else key
+        }
 
     val isConfigured: Boolean
         get() = apiKey.isNotBlank()

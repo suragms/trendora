@@ -28,13 +28,17 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # The build reads keys from local.properties. CI uses placeholder values
-      # so the code compiles; runtime API calls simply report "not configured"
-      # and the app falls back to cache/mock. No real secrets are used/published.
-      - name: Create local.properties with placeholder keys
+      # BuildConfig keys come from local.properties. Prefer GitHub Actions
+      # Secrets when set; otherwise use placeholders so the public repo builds
+      # without committed credentials. Placeholders are treated as "not
+      # configured" at runtime and the app falls back to cache/mock.
+      - name: Create local.properties for CI
+        env:
+          GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "GNEWS_API_KEY=CI_PLACEHOLDER" > local.properties
-          echo "GEMINI_API_KEY=CI_PLACEHOLDER" >> local.properties
+          echo "GNEWS_API_KEY=${GNEWS_API_KEY:-CI_PLACEHOLDER}" > local.properties
+          echo "GEMINI_API_KEY=${GEMINI_API_KEY:-CI_PLACEHOLDER}" >> local.properties
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --no-daemon

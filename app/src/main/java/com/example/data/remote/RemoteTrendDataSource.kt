@@ -1,5 +1,6 @@
 package com.example.data.remote
 
+import android.util.Log
 import com.example.core.network.GNewsApiService
 import com.example.core.network.GNewsClient
 import com.example.core.network.GNewsErrorMapper
@@ -33,6 +34,7 @@ class RemoteTrendDataSource(
         timeFilter: TimeFilter
     ): DataSourceResult<List<BreakingNewsItem>> = withContext(Dispatchers.IO) {
         if (!isConfigured) {
+            Log.w(TAG, "GNews API key is not configured")
             return@withContext DataSourceResult.Error(GNewsErrorMapper.MISSING_KEY_MESSAGE)
         }
         if (!networkMonitor.isCurrentlyConnected()) {
@@ -91,6 +93,10 @@ class RemoteTrendDataSource(
      */
     private fun GNewsArticleDto.publishedAtMillis(): Long =
         GNewsMappers.parseDate(publishedAt) ?: Long.MAX_VALUE
+
+    companion object {
+        private const val TAG = "RemoteTrendDataSource"
+    }
 }
 
 /** Number of milliseconds an article must be newer than to match a [TimeFilter]. */
