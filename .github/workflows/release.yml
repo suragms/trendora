@@ -1,0 +1,149 @@
+name: Release
+
+# Push a version tag (v1.0.0, v1.1.0, …) or run manually via workflow_dispatch.
+# Builds, tests, lints, packages the APK, then creates a GitHub Release with the APK attached.
+# API keys come ONLY from repository Secrets — never committed or logged.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g. v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, test, lint & publish APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.version }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          case "$TAG" in
+            v*) ;;
+            *)
+              echo "::error::Tag must start with 'v' (got: ${TAG})"
+              exit 1
+              ;;
+          esac
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "apk_name=Trendora-${TAG}.apk" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag=${TAG}"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Configure API keys from GitHub Secrets
+        env:
+          GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GNEWS_API_KEY" ] || [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::Repository Secrets GNEWS_API_KEY and GEMINI_API_KEY must be set before releasing."
+            exit 1
+          fi
+          # Written only on the ephemeral runner; never printed.
+          umask 077
+          printf 'GNEWS_API_KEY=%s\nGEMINI_API_KEY=%s\n' "$GNEWS_API_KEY" "$GEMINI_API_KEY" > local.properties
+
+      - name: Clean
+        run: ./gradlew :app:clean --no-daemon
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: Lint
+        run: ./gradlew :app:lintDebug --no-daemon
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Prepare named APK asset
+        id: apk
+        run: |
+          SRC="app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$SRC" ]; then
+            echo "::error::Expected APK not found at ${SRC}"
+            exit 1
+          fi
+          mkdir -p release-assets
+          DEST="release-assets/${{ steps.meta.outputs.apk_name }}"
+          cp "$SRC" "$DEST"
+          echo "asset=${DEST}" >> "$GITHUB_OUTPUT"
+          ls -lh "$SRC" "$DEST"
+
+      - name: Write release notes
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import os
+          tag = os.environ["TAG"]
+          open("release-notes.md", "w", encoding="utf-8").write(f"""Trendora {tag}
+
+          What's included:
+          - AI-powered trend discovery
+          - Real-time news and trend data (GNews)
+          - Gemini AI trend analysis (sentiment, growth, viral probability, confidence)
+          - Explore with search, category, country, and time filters
+          - Saved trends and articles (local Room persistence)
+          - Offline-first fallback (Remote → Cache → Mock)
+          - No account required — no login, register, or profile
+          - Bottom navigation: Home · Explore · AI Trends · Saved
+
+          Installation:
+          1. Download the APK.
+          2. Open the APK on Android.
+          3. Allow installation from the source if Android asks.
+          4. Install Trendora.
+          5. Launch the app (Splash → Home).
+
+          Requirements:
+          - Android 7.0 (API 24) or newer
+          - Internet recommended for live news and AI
+
+          Notes:
+          - This APK is debug-signed for public demo distribution.
+          - Production Play Store builds require a private upload keystore (see RELEASE.md).
+          """.replace("\n          ", "\n"))
+          PY
+
+      - name: Create GitHub Release and attach APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          ASSET="${{ steps.apk.outputs.asset }}"
+          # Official GitHub CLI on the runner — creates the release (and tag target if needed).
+          gh release create "$TAG" \
+            --title "Trendora ${TAG}" \
+            --notes-file release-notes.md \
+            --target "${{ github.sha }}" \
+            "$ASSET"

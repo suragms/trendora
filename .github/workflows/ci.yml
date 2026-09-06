@@ -19,34 +19,35 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # Pinned to the same version as gradle/wrapper/gradle-wrapper.properties.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.1'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
       # BuildConfig keys come from local.properties. Prefer GitHub Actions
-      # Secrets when set; otherwise use placeholders so the public repo builds
-      # without committed credentials. Placeholders are treated as "not
-      # configured" at runtime and the app falls back to cache/mock.
+      # Secrets when set; otherwise use placeholders so PRs compile without
+      # credentials. Placeholders are treated as "not configured" at runtime.
       - name: Create local.properties for CI
         env:
           GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "GNEWS_API_KEY=${GNEWS_API_KEY:-CI_PLACEHOLDER}" > local.properties
-          echo "GEMINI_API_KEY=${GEMINI_API_KEY:-CI_PLACEHOLDER}" >> local.properties
+          umask 077
+          printf 'GNEWS_API_KEY=%s\nGEMINI_API_KEY=%s\n' \
+            "${GNEWS_API_KEY:-CI_PLACEHOLDER}" \
+            "${GEMINI_API_KEY:-CI_PLACEHOLDER}" > local.properties
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
 
       - name: Build debug APK
-        run: gradle :app:assembleDebug --no-daemon
+        run: ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Run unit tests
-        run: gradle :app:testDebugUnitTest --no-daemon
-
-      - name: Upload debug APK
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk

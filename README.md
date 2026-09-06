@@ -66,17 +66,15 @@ The fallback order is: **Remote → Cache → Mock**. The UI is never left on a 
 
 ## Download Trendora
 
-Get the latest ready-to-install APK from GitHub Releases:
+The latest Android APK is published automatically on every version tag via GitHub Actions.
 
-**[⬇️ Download Trendora-v1.0.0.apk (Latest Release)](https://github.com/suragms/trendora/releases/latest)**
+**[Download the latest release](https://github.com/suragms/trendora/releases/latest)**
 
-Direct asset link (after the `v1.0.0` release is published):
+On the release page, open **Assets** and download `Trendora-vX.Y.Z.apk` (for example `Trendora-v1.0.0.apk`).
 
-`https://github.com/suragms/trendora/releases/latest/download/Trendora-v1.0.0.apk`
+### What Trendora is
 
-### What you get
-
-Trendora is an **AI-powered trend intelligence** Android app. It shows live headlines from GNews, a Trendora-calculated 0–100 trend score, and Gemini-powered analysis (sentiment, growth, viral probability). Browse **Home**, **Explore**, **AI Trends**, and **Saved** — no account required.
+Trendora is an **AI-powered trend intelligence** app for Android. It surfaces live headlines from GNews, a Trendora-calculated 0–100 trend score, and Gemini-powered analysis. Browse **Home**, **Explore**, **AI Trends**, and **Saved** — **no account or login required**.
 
 ### Requirements
 
@@ -85,32 +83,34 @@ Trendora is an **AI-powered trend intelligence** Android app. It shows live head
 | OS | Android 7.0 (API 24) or newer |
 | Network | Internet recommended for live news & AI (offline cache/mock fallback included) |
 | Account | **None** — no login, register, or profile |
-| Sideloading | Allow install from unknown sources / browser |
+| Sideloading | Allow install from unknown sources / browser when prompted |
 
 ### Install on your phone
 
-1. Open the [latest release](https://github.com/suragms/trendora/releases/latest) on your Android device (or download on a PC and transfer the APK).
-2. Tap **Trendora-v1.0.0.apk** under **Assets**.
-3. If prompted, allow installs from your browser/file manager.
+1. Open **[Releases → Latest](https://github.com/suragms/trendora/releases/latest)** on your Android device (or download on a PC and transfer the file).
+2. Under **Assets**, tap the `Trendora-v*.apk` file.
+3. If prompted, allow installs from your browser or file manager.
 4. Open the APK and tap **Install**.
-5. Launch **Trendora** — you go straight to Home (Splash → Home). No sign-in screen.
+5. Launch **Trendora** — Splash → Home. There is no sign-in screen.
 
 ### Notes
 
-- The public release APK is a **debug-signed** build suitable for demo/portfolio distribution. For Play Store, use a release-signed AAB (see [`RELEASE.md`](RELEASE.md)).
-- API keys for the published APK are injected at CI build time from **GitHub Actions Secrets** (`GNEWS_API_KEY`, `GEMINI_API_KEY`) — they are never stored in this repository.
+- Public GitHub APKs are **debug-signed** (fine for demo/portfolio sideloading). Play Store distribution needs a private upload keystore — see [`RELEASE.md`](RELEASE.md).
+- API keys for release builds are injected in CI from GitHub Actions Secrets only — never stored in this repository.
 
-### Maintainers: publish a new APK release
+### Maintainers: publish a release
 
-1. In the GitHub repo → **Settings → Secrets and variables → Actions**, add:
-   - `GNEWS_API_KEY`
-   - `GEMINI_API_KEY`
-2. Commit/push the latest `main` (including `.github/workflows/release-apk.yml`).
-3. Create a GitHub Release with tag **`v1.0.0`** (or bump, e.g. `v1.0.1`):
-   - GitHub UI: **Releases → Draft a new release → Choose tag `v1.0.0` → Publish release**
-   - or CLI: `gh release create v1.0.0 --title "Trendora v1.0.0" --generate-notes`
-4. The **Release APK** workflow builds the APK and uploads **`Trendora-v1.0.0.apk`** to that release’s **Assets**.
-5. Users download from **Releases → Latest → Assets**.
+1. Repo → **Settings → Secrets and variables → Actions** → add `GNEWS_API_KEY` and `GEMINI_API_KEY`.
+2. Push `main` with `.github/workflows/release.yml`.
+3. Create and push a version tag (this runs the Release workflow and creates the GitHub Release + APK asset):
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+4. Or run **Actions → Release → Run workflow** and enter `v1.0.0`.
+5. Users download from **[Releases → Latest → Assets](https://github.com/suragms/trendora/releases/latest)**.
 
 ## Installation (developers)
 
