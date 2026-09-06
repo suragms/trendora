@@ -286,7 +286,7 @@ fun HomeTopHeader(
     greeting: String,
     unreadNotifs: Int,
     onNotifClick: () -> Unit,
-    onProfileClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -334,7 +334,7 @@ fun HomeTopHeader(
             }
         }
 
-        // Actions: Notifications & Profile Avatar
+        // Actions: Notifications & Settings
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -374,24 +374,22 @@ fun HomeTopHeader(
                 }
             }
 
-            // Profile Avatar
-            Surface(
+            // Settings Gear
+            IconButton(
+                onClick = onSettingsClick,
                 modifier = Modifier
                     .size(44.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, Brush.linearGradient(listOf(Color(0xFF9333EA), Color(0xFF22D3EE))), CircleShape)
-                    .clickable(onClick = onProfileClick)
-                    .semantics { contentDescription = "Open profile" }
-                    .testTag("header_profile_avatar"),
-                color = MaterialTheme.colorScheme.surfaceVariant
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
+                    .testTag("header_settings_button")
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "S",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = ElectricCyan
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
     }
