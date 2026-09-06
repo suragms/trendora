@@ -28,8 +28,19 @@ data class HomeUiState(
     val errorMessage: String? = null,
     val isShowingCached: Boolean = false,
     val isShowingMock: Boolean = false,
-    val userGreeting: String = "What's trending today?"
+    val userGreeting: String = defaultGreeting()
 )
+
+/** Generic, account-free greeting — never personalizes with a user name. */
+internal fun defaultGreeting(): String {
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    return when (hour) {
+        in 5..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        in 17..20 -> "Good Evening"
+        else -> "Discover What's Trending"
+    }
+}
 
 private data class HomeContentData(
     val trends: List<TrendItem>,
@@ -137,7 +148,8 @@ class HomeViewModel(
             isShowingCached = flags.isShowingCached,
             isShowingMock = flags.isShowingMock,
             showVoiceDialog = filter.showVoiceDialog,
-            showNotificationsDialog = filter.showNotificationsDialog
+            showNotificationsDialog = filter.showNotificationsDialog,
+            userGreeting = defaultGreeting()
         )
     }.stateIn(
         scope = viewModelScope,

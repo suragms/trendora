@@ -10,8 +10,7 @@
 
     <!--
         Android 12+ Splash Screen (androidx.core:core-splashscreen).
-        Shown while the app cold-starts, then replaced by Theme.Trendora.
-        Uses the Trendora launcher mark on a dark branded background.
+        Splash → Home (no login). Uses the official launcher foreground.
     -->
     <style name="Theme.Trendora.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>

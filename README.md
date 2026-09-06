@@ -14,12 +14,20 @@ Trendora is a modern Android app built with **Kotlin + Jetpack Compose** that pu
 
 ## Features
 
+Bottom navigation (exactly four destinations):
+
 - 🏠 **Home** — Top headlines, breaking news, and category news from the real GNews API.
 - 🔎 **Explore** — Search (debounced), category filtering, country filtering, time filtering, and sorting with client-side recency filtering.
 - 🤖 **AI Trends** — Gemini-powered predictive analytics: sentiment, growth prediction, viral probability, and AI confidence.
-- 📈 **Trend Details** — Structured AI deep-dive, sentiment breakdown, related topics, and multi-platform discussions.
 - 🔖 **Saved** — Bookmark trends and articles locally; persists across app restarts via Room.
-- ⚙️ **Settings** — Dark mode, preferred region, and trend alert preferences, persisted locally in DataStore.
+
+Additional screens (not in the bottom bar):
+
+- 📈 **Trend Details** — Structured AI deep-dive, sentiment breakdown, related topics, and multi-platform discussions.
+- ⚙️ **Settings** — Opened from the Home gear icon. Dark mode, preferred region, trend alert preferences, cache clearing, and About — all stored locally in DataStore. **No account, profile, login, or logout.**
+
+Platform capabilities:
+
 - 📴 **Offline-first** — Remote → Cache → Mock fallback chain. Never a broken empty screen.
 - 🏷️ **Trend Score** — A **Trendora-calculated** 0–100 score (Viral / Rising / Popular / Low Activity) derived from real signals such as recency, source popularity, and category activity. GNews does **not** provide a virality score; this is clearly a Trendora estimate.
 

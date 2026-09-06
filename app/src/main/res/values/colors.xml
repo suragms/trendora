@@ -9,6 +9,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Splash background matching the launcher gradient (dark tech navy). -->
-    <color name="splash_background">#0D1F3C</color>
+    <!-- Splash / adaptive background matching the official launcher logo. -->
+    <color name="ic_launcher_background">#000000</color>
+    <color name="splash_background">#000000</color>
 </resources>
